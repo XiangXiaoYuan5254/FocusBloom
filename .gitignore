@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+dist/
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+
+# Local runtime data and exports
+focus-data.json
+*.csv

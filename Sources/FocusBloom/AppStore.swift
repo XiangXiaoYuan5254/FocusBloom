@@ -18,6 +18,7 @@ final class AppStore: ObservableObject {
     @Published var showSessionEndDialog = false
     @Published var musicMessage: String?
     @Published var toastMessage: String?
+    @Published private(set) var isAmbientPlaying = false
 
     private var timer: Timer?
     private var focusEndDate: Date?
@@ -28,6 +29,7 @@ final class AppStore: ObservableObject {
     private var draft: SessionDraft?
     private var pendingCompleted = false
     private var cancellables = Set<AnyCancellable>()
+    private let ambientPlayer = AmbientPlayer()
 
     init() {
         let data = Persistence.load()
@@ -45,6 +47,15 @@ final class AppStore: ObservableObject {
                 } else {
                     self.persist()
                 }
+            }
+            .store(in: &cancellables)
+
+        // 音量不走上面的防抖，拖动滑块时要立刻听到变化。
+        $settings
+            .map(\.ambientLevels)
+            .removeDuplicates()
+            .sink { [weak self] levels in
+                self?.ambientPlayer.setLevels(levels)
             }
             .store(in: &cancellables)
 
@@ -195,6 +206,9 @@ final class AppStore: ObservableObject {
         phase = .focusing
         pendingCompleted = false
         scheduleNextReminder()
+        if settings.resolvedAmbientFollowsFocus {
+            playAmbient()
+        }
         toast("开始这一轮。先只做好眼前的一小段。")
     }
 
@@ -206,11 +220,17 @@ final class AppStore: ObservableObject {
             nextReminderDate = nil
             appendEvent(.pause)
             phase = .paused
+            if settings.resolvedAmbientFollowsFocus {
+                stopAmbient()
+            }
         case .paused:
             focusEndDate = Date().addingTimeInterval(pausedRemaining)
             appendEvent(.resume)
             phase = .focusing
             scheduleNextReminder()
+            if settings.resolvedAmbientFollowsFocus {
+                playAmbient()
+            }
         default:
             break
         }
@@ -239,6 +259,9 @@ final class AppStore: ObservableObject {
         showSessionEndDialog = false
         showCompletionSheet = false
         musicMessage = nil
+        if settings.resolvedAmbientFollowsFocus {
+            stopAmbient()
+        }
         toast("这轮已放弃，不会计入任何专注数据。")
     }
 
@@ -359,8 +382,9 @@ final class AppStore: ObservableObject {
     }
 
     func testMusic() {
-        musicMessage = "正在连接“音乐”App…"
-        MusicController.playRandom(source: settings.musicSource, playlistName: settings.playlistName) { [weak self] result in
+        let service = settings.resolvedMusicService
+        musicMessage = "正在连接“\(service.rawValue)”…"
+        MusicController.playRandom(service: service, source: settings.musicSource, playlistName: settings.playlistName) { [weak self] result in
             switch result {
             case .success(let track):
                 self?.musicMessage = "正在播放：\(track)"
@@ -368,6 +392,43 @@ final class AppStore: ObservableObject {
                 self?.musicMessage = "播放失败：\(error.localizedDescription)"
             }
         }
+    }
+
+    func isAmbientSelected(_ sound: AmbientSound) -> Bool {
+        settings.selectedAmbientSounds.contains(sound)
+    }
+
+    func toggleAmbientSound(_ sound: AmbientSound) {
+        var selected = settings.selectedAmbientSounds
+        if let index = selected.firstIndex(of: sound) {
+            selected.remove(at: index)
+            settings.ambientSounds = selected.map(\.rawValue)
+            if selected.isEmpty {
+                stopAmbient()
+            }
+        } else {
+            selected.append(sound)
+            settings.ambientSounds = selected.map(\.rawValue)
+            // 点一下就能试听，不用再去按播放。
+            playAmbient()
+        }
+    }
+
+    func setAmbientVolume(_ volume: Double, for sound: AmbientSound) {
+        var volumes = settings.ambientVolumes ?? [:]
+        volumes[sound.rawValue] = volume
+        settings.ambientVolumes = volumes
+    }
+
+    func toggleAmbientPlayback() {
+        if isAmbientPlaying {
+            stopAmbient()
+            return
+        }
+        if settings.selectedAmbientSounds.isEmpty {
+            settings.ambientSounds = [AmbientSound.rain.rawValue]
+        }
+        playAmbient()
     }
 
     func exportCSV() {
@@ -456,9 +517,28 @@ final class AppStore: ObservableObject {
         playSound(named: settings.completionSound)
         showCompletionSheet = true
 
+        // 结束音乐要接上时也停掉环境音，免得两者叠在一起。
+        if settings.resolvedAmbientFollowsFocus || settings.autoPlayMusic {
+            stopAmbient()
+        }
+
         if settings.autoPlayMusic {
             testMusic()
         }
+    }
+
+    private func playAmbient() {
+        guard !settings.selectedAmbientSounds.isEmpty else { return }
+        isAmbientPlaying = ambientPlayer.play()
+        if !isAmbientPlaying {
+            toast("环境音无法播放，请检查声音输出设备。")
+        }
+    }
+
+    private func stopAmbient() {
+        guard isAmbientPlaying else { return }
+        ambientPlayer.stop()
+        isAmbientPlaying = false
     }
 
     private func scheduleNextReminder() {

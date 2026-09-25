@@ -35,6 +35,11 @@ done
 
 iconutil -c icns "$iconset_dir" -o "$contents_dir/Resources/FocusBloom.icns"
 
+# 环境音录音（来源与授权见 Resources/Ambient/CREDITS.md）
+rm -rf "$contents_dir/Resources/Ambient"
+mkdir -p "$contents_dir/Resources/Ambient"
+cp "$project_dir"/Resources/Ambient/*.m4a "$contents_dir/Resources/Ambient/"
+
 cat > "$contents_dir/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -57,13 +62,13 @@ cat > "$contents_dir/Info.plist" <<'PLIST'
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>专注芽需要控制“音乐”App，以便在一轮专注结束后从你的资料库随机播放歌曲。</string>
+    <string>专注芽需要控制“音乐”App 或通过“System Events”操作网易云音乐，以便在一轮专注结束后自动播放音乐。</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>

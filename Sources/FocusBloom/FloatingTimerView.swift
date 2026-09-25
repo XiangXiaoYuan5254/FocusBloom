@@ -6,6 +6,51 @@ enum FloatingTimerWindow {
     static let mainWindowIdentifier = NSUserInterfaceItemIdentifier("focus-bloom-main-window")
 }
 
+enum MainWindowRestorer {
+    private static weak var registeredWindow: NSWindow?
+
+    static func register(_ window: NSWindow) {
+        registeredWindow = window
+        window.identifier = FloatingTimerWindow.mainWindowIdentifier
+    }
+
+    @discardableResult
+    static func restore(in application: NSApplication = NSApp) -> Bool {
+        guard let mainWindow = resolveMainWindow(in: application) else {
+            return false
+        }
+
+        register(mainWindow)
+        application.unhide(nil)
+
+        if mainWindow.isMiniaturized {
+            mainWindow.deminiaturize(nil)
+        }
+
+        application.activate(ignoringOtherApps: true)
+        mainWindow.makeKeyAndOrderFront(nil)
+        mainWindow.orderFrontRegardless()
+        NSRunningApplication.current.activate(options: [.activateAllWindows])
+        return true
+    }
+
+    private static func resolveMainWindow(in application: NSApplication) -> NSWindow? {
+        if let registeredWindow {
+            return registeredWindow
+        }
+
+        return application.windows.first(where: { window in
+            if window.identifier == FloatingTimerWindow.mainWindowIdentifier {
+                return true
+            }
+
+            return window.level == .normal
+                && !window.isExcludedFromWindowsMenu
+                && window.canBecomeMain
+        })
+    }
+}
+
 struct MainWindowObserver: NSViewRepresentable {
     let onMiniaturizationChange: (Bool) -> Void
 
@@ -37,7 +82,7 @@ final class WindowObservationView: NSView {
         guard let window, window !== observedWindow else { return }
         removeObservers()
         observedWindow = window
-        window.identifier = FloatingTimerWindow.mainWindowIdentifier
+        MainWindowRestorer.register(window)
 
         miniaturizeObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didMiniaturizeNotification,
@@ -350,14 +395,9 @@ struct FloatingTimerView: View {
     }
 
     private func restoreMainWindow() {
-        guard let mainWindow = NSApp.windows.first(where: {
-            $0.identifier == FloatingTimerWindow.mainWindowIdentifier
-        }) else { return }
-
-        mainWindow.deminiaturize(nil)
-        mainWindow.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-        dismissWindow(id: FloatingTimerWindow.id)
+        if MainWindowRestorer.restore() {
+            dismissWindow(id: FloatingTimerWindow.id)
+        }
     }
 }
 

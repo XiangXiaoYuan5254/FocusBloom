@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>专注芽 FocusBloom · macOS 专注训练工具</title>
+  <meta name="description" content="专注芽是一款本地优先的 macOS 专注训练工具。用随机提示觉察走神，用每一轮的记录找到适合自己的学习节律。免费下载，无需账号，数据只保存在你的 Mac 上。">
+  <meta name="keywords" content="专注芽,FocusBloom,专注,番茄钟,走神,专注训练,环境音,白噪音,macOS,Mac 专注 App">
+  <meta name="theme-color" content="#080F11">
+  <meta name="color-scheme" content="dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="专注芽 FocusBloom · 让注意力，慢慢发芽">
+  <meta property="og:description" content="本地优先的 macOS 专注训练工具：随机提示、走神记录、环境音与注意力洞察。">
+  <meta property="og:image" content="assets/img/icon-512.png">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/img/favicon-64.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>document.documentElement.classList.add('js')</script>
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body>
+
+<!-- 图标：线条风格，统一 24×24 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+    <symbol id="i-leaf-f" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" fill="currentColor"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-scope" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path fill="currentColor" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M7 4.5v15a1 1 0 0 0 1.52.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1.2" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+    <symbol id="i-dial" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12l4-4"/><path d="M12 5v1M5 12h1M18 12h1"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-chevrons" viewBox="0 0 24 24"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="i-battery" viewBox="0 0 24 24"><rect x="2" y="7" width="17" height="10" rx="2.5"/><path d="M22 11v2"/><rect x="4.5" y="9.5" width="4" height="5" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M10.2 3.6a.5.5 0 0 1 .96 0l1.2 4.1a3 3 0 0 0 2.05 2.05l4.1 1.2a.5.5 0 0 1 0 .96l-4.1 1.2a3 3 0 0 0-2.05 2.05l-1.2 4.1a.5.5 0 0 1-.96 0l-1.2-4.1a3 3 0 0 0-2.05-2.05l-4.1-1.2a.5.5 0 0 1 0-.96l4.1-1.2A3 3 0 0 0 9 7.7z"/><path fill="currentColor" stroke="none" d="M18.6 2.3a.3.3 0 0 1 .57 0l.45 1.4a1.5 1.5 0 0 0 .96.96l1.4.45a.3.3 0 0 1 0 .57l-1.4.45a1.5 1.5 0 0 0-.96.96l-.45 1.4a.3.3 0 0 1-.57 0l-.45-1.4a1.5 1.5 0 0 0-.96-.96l-1.4-.45a.3.3 0 0 1 0-.57l1.4-.45a1.5 1.5 0 0 0 .96-.96z"/></symbol>
+    <symbol id="i-rain" viewBox="0 0 24 24"><path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"/><path d="M16 14v6M8 14v6M12 16v6"/></symbol>
+    <symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/></symbol>
+    <symbol id="i-fire" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+    <symbol id="i-bird" viewBox="0 0 24 24"><path d="M16 7h.01M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20M20 7l2 .5-2 .5M10 18v3M14 17.75V21M7 18a6 6 0 0 0 3.84-10.61"/></symbol>
+    <symbol id="i-night" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4M17 5h4"/></symbol>
+    <symbol id="i-noise" viewBox="0 0 24 24"><path d="M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 10v4M7.5 6v12M12 3v18M16.5 8v8M21 10v4"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M7 20h10M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-user-off" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 8l5 5M22 8l-5 5"/></symbol>
+    <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="m2 2 20 20M5.78 5.78A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.31-.19M21.53 16.5A4.5 4.5 0 0 0 17.5 8h-1.79A7 7 0 0 0 10 5.07"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.73 5.08a10.74 10.74 0 0 1 11.2 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49M14.08 14.16a3 3 0 0 1-4.24-4.24M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14M2 2l20 20"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h6M8 13h8M8 17h8M8 9h2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-pip" viewBox="0 0 24 24"><path d="M21 10V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><rect x="12" y="13" width="10" height="7" rx="1.5"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M11.52 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.01a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .3-.91l5.16-.75a2.12 2.12 0 0 0 1.6-1.16z"/></symbol>
+    <symbol id="i-menubar" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 8h18"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.31.76-1.6-2.67-.3-5.47-1.34-5.47-5.94 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .32.21.7.82.58A12 12 0 0 0 12 .3"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main">跳到正文</a>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top" aria-label="专注芽 FocusBloom 首页">
+      <img src="assets/img/icon-512.png" alt="" width="32" height="32">
+      <span class="brand-name">专注芽</span>
+      <span class="brand-en">FocusBloom</span>
+    </a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="#how">工作方式</a>
+      <a href="#features">功能</a>
+      <a href="#sounds">环境音</a>
+      <a href="#insights">洞察</a>
+      <a href="#privacy">隐私</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="icon-btn" data-link="github" href="https://github.com/XiangXiaoYuan5254/FocusBloom" target="_blank" rel="noopener" aria-label="在 GitHub 查看源码">
+        <svg class="i"><use href="#i-github"/></svg>
+      </a>
+      <a class="btn btn-primary btn-sm" href="#download">
+        <svg class="i"><use href="#i-download"/></svg>下载
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="top">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="glow glow-b"></div>
+    </div>
+
+    <div class="hero-copy container">
+      <h1 data-reveal style="--d:.06s">让注意力，<br><em>慢慢发芽。</em></h1>
+      <p class="hero-sub" data-reveal style="--d:.12s">
+        专注芽是一款本地优先的 macOS 专注训练工具。<br class="br-md">它用随机提示帮你觉察走神，用每一轮的记录，找到真正适合自己的学习节律。
+      </p>
+      <div class="hero-cta" data-reveal style="--d:.18s">
+        <a class="btn btn-primary btn-lg" data-link="download" href="downloads/FocusBloom-macOS.zip">
+          <svg class="i"><use href="#i-download"/></svg>下载 macOS 版
+        </a>
+        <a class="btn btn-ghost btn-lg" data-link="releases" href="https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest" target="_blank" rel="noopener">
+          <svg class="i"><use href="#i-github"/></svg>从 GitHub 下载
+        </a>
+      </div>
+      <p class="hero-meta" data-reveal style="--d:.24s">
+        <span>免费</span><i></i><span data-text="version">v1.1.0</span><i></i><span data-text="requirement">macOS 14+ · Apple 芯片</span><i></i><span>无需账号</span>
+      </p>
+    </div>
+
+    <!-- App 界面还原 -->
+    <div class="stage container-wide" aria-label="专注芽主界面示意" role="img">
+      <div class="stage-bg" aria-hidden="true">
+        <div class="glow glow-a"></div>
+        <div class="orbits">
+          <span class="orbit o1"></span>
+          <span class="orbit o2"><i class="orbit-dot"></i></span>
+          <span class="orbit o3"></span>
+        </div>
+      </div>
+      <div class="stage-tilt" id="stageTilt">
+        <div class="mock" id="mock" data-phase="focusing">
+          <div class="win">
+            <aside class="win-side">
+              <div class="lights"><i></i><i></i><i></i></div>
+              <div class="side-brand">
+                <span class="side-logo"><svg class="i"><use href="#i-leaf-f"/></svg></span>
+                <span>
+                  <b>专注芽</b>
+                  <small>FOCUSBLOOM</small>
+                </span>
+              </div>
+              <ul class="side-nav">
+                <li class="on"><svg class="i"><use href="#i-timer"/></svg>专注<span class="live-dot"></span></li>
+                <li><svg class="i"><use href="#i-chart"/></svg>洞察</li>
+                <li><svg class="i"><use href="#i-history"/></svg>记录</li>
+                <li><svg class="i"><use href="#i-sliders"/></svg>设置</li>
+              </ul>
+              <div class="side-spacer"></div>
+              <div class="side-toggle">
+                <span class="tg-icon"><svg class="i"><use href="#i-sun"/></svg></span>切换到日间模式
+              </div>
+              <div class="side-today">
+                <small>今天</small>
+                <div class="st-row">
+                  <span><b>75</b><em>分钟</em></span>
+                  <span><b>2</b><em>轮</em></span>
+                </div>
+                <hr>
+                <p><svg class="i"><use href="#i-flame"/></svg>连续 6 天</p>
+              </div>
+            </aside>
+
+            <div class="win-main">
+              <div class="toast" id="mockToast"><svg class="i"><use href="#i-check"/></svg><span>记下了。发现走神，本身就是注意力回来了。</span></div>
+              <div class="wm-head">
+                <div class="wm-heading">
+                  <small>下午好</small>
+                  <h3 id="mockTitle">把注意力放回眼前</h3>
+                  <p>计时只统计净专注时间，微休息不会占用本轮时长。</p>
+                </div>
+                <div class="wm-pills">
+                  <div class="mpill"><span class="mp-ic"><svg class="i"><use href="#i-clock"/></svg></span><span><b>75 分钟</b><em>今日专注</em></span></div>
+                  <div class="mpill coral"><span class="mp-ic"><svg class="i"><use href="#i-scope"/></svg></span><span><b id="mockWanderPill">3 次</b><em>今日走神</em></span></div>
+                  <div class="mpill amber"><span class="mp-ic"><svg class="i"><use href="#i-flame"/></svg></span><span><b>6 天</b><em>连续记录</em></span></div>
+                </div>
+              </div>
+
+              <div class="wm-row">
+                <div class="timer-card">
+                  <div class="ring">
+                    <svg viewBox="0 0 285 285" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0" stop-color="#A5F1D1"/>
+                          <stop offset=".55" stop-color="#78D7B2"/>
+                          <stop offset="1" stop-color="#84B9FF"/>
+                        </linearGradient>
+                      </defs>
+                      <circle class="ring-track" cx="142.5" cy="142.5" r="134"/>
+                      <circle class="ring-bar" id="ringBar" cx="142.5" cy="142.5" r="134" pathLength="1000"/>
+                    </svg>
+                    <div class="ring-center">
+                      <span class="phase-ic">
+                        <svg class="i ic-focus"><use href="#i-leaf-f"/></svg>
+                        <svg class="i ic-break"><use href="#i-sparkles"/></svg>
+                      </span>
+                      <strong id="mockTime">23:48</strong>
+                      <small id="mockCaption">论文写作 · 净专注剩余</small>
+                    </div>
+                  </div>
+                  <div class="tc-buttons">
+                    <span class="mbtn primary show-focus"><svg class="i"><use href="#i-pause"/></svg>暂停</span>
+                    <span class="mbtn primary show-break"><svg class="i"><use href="#i-arrow-right"/></svg>提前继续</span>
+                    <span class="mbtn secondary"><svg class="i"><use href="#i-stop"/></svg>结束</span>
+                  </div>
+                  <div class="tc-metrics">
+                    <div><svg class="i"><use href="#i-hourglass"/></svg><span><b>60 分钟</b><em>本轮目标</em></span></div>
+                    <hr>
+                    <div><svg class="i"><use href="#i-bell"/></svg><span><b>3–5 分钟</b><em>随机提示</em></span></div>
+                  </div>
+                </div>
+
+                <div class="control-card">
+                  <div class="cc-head">
+                    <div><b>本轮设置</b><p>开始后锁定，避免反复调整。</p></div>
+                    <svg class="i"><use href="#i-dial"/></svg>
+                  </div>
+                  <div class="cc-block">
+                    <div class="cc-label"><span>本轮任务</span><b>论文写作</b></div>
+                    <div class="cc-picker">
+                      <span class="popup">论文写作<svg class="i"><use href="#i-chevrons"/></svg></span>
+                      <span class="sq"><svg class="i"><use href="#i-plus"/></svg></span>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="cc-block">
+                    <div class="cc-label"><span>专注时长</span><b>60 分钟</b></div>
+                    <div class="cc-durations">
+                      <span>30</span><span class="on">60</span><span>90</span>
+                      <span class="custom"><b>60</b><em>分</em><i class="stepper"></i></span>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="cc-block">
+                    <div class="cc-label"><span>随机提示区间</span><b>3–5 分钟</b></div>
+                    <div class="cc-range">
+                      <div class="rbox"><small>最早</small><span><b>3</b><em>分</em></span><i class="stepper"></i></div>
+                      <svg class="i"><use href="#i-arrow-right"/></svg>
+                      <div class="rbox"><small>最晚</small><span><b>5</b><em>分</em></span><i class="stepper"></i></div>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="cc-block">
+                    <div class="cc-label"><span>开始前精力</span><b>不错</b></div>
+                    <div class="cc-energy"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div>
+                  </div>
+                  <div class="cc-music"><svg class="i"><use href="#i-music"/></svg>结束后随机播放 Apple Music</div>
+                </div>
+              </div>
+
+              <div class="live-card">
+                <div><b>注意力掉线了？</b><p>点一下即可，不评价自己。越诚实的数据，越能看清你的节律。</p></div>
+                <span class="lbtn coral"><svg class="i"><use href="#i-scope"/></svg><span><b>我走神了</b><em id="mockWanderLive">1 次</em></span></span>
+                <span class="lbtn amber"><svg class="i"><use href="#i-battery"/></svg><span><b>我开始累了</b><em>0 次</em></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 悬浮倒计时 -->
+          <div class="floater">
+            <div class="fl-top">
+              <div class="fl-ring">
+                <svg viewBox="0 0 49 49" aria-hidden="true">
+                  <circle class="fr-track" cx="24.5" cy="24.5" r="22"/>
+                  <circle class="fr-bar" id="flBar" cx="24.5" cy="24.5" r="22" pathLength="1000"/>
+                </svg>
+                <svg class="i ic-focus"><use href="#i-leaf-f"/></svg>
+                <svg class="i ic-break"><use href="#i-sparkles"/></svg>
+              </div>
+              <div class="fl-text">
+                <small><i></i><span id="flStatus">专注中</span></small>
+                <strong id="flTime">23:48</strong>
+              </div>
+              <div class="fl-btns">
+                <span><svg class="i show-focus"><use href="#i-pause"/></svg><svg class="i show-break"><use href="#i-arrow-right"/></svg></span>
+                <span><svg class="i"><use href="#i-expand"/></svg></span>
+              </div>
+            </div>
+            <div class="fl-signals">
+              <span class="coral"><svg class="i"><use href="#i-scope"/></svg>我走神了<b id="flWander">1</b></span>
+              <span class="amber"><svg class="i"><use href="#i-battery"/></svg>我开始累了<b>0</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 原则条 ============ -->
+  <section class="principles container" aria-label="设计原则">
+    <div class="pr-item" data-reveal>
+      <svg class="i"><use href="#i-shield"/></svg>
+      <div><b>本地优先</b><p>全部记录只保存在你的 Mac</p></div>
+    </div>
+    <div class="pr-item" data-reveal style="--d:.06s">
+      <svg class="i"><use href="#i-user-off"/></svg>
+      <div><b>无需账号</b><p>下载、打开，就能开始第一轮</p></div>
+    </div>
+    <div class="pr-item" data-reveal style="--d:.12s">
+      <svg class="i"><use href="#i-eye-off"/></svg>
+      <div><b>无广告，无追踪</b><p>不包含任何分析 SDK</p></div>
+    </div>
+    <div class="pr-item" data-reveal style="--d:.18s">
+      <svg class="i"><use href="#i-cloud-off"/></svg>
+      <div><b>离线可用</b><p>环境音内置，不需要联网</p></div>
+    </div>
+  </section>
+
+  <!-- ============ 工作方式 ============ -->
+  <section class="section" id="how">
+    <div class="container">
+      <header class="sec-head" data-reveal>
+        <span class="eyebrow">How it works</span>
+        <h2>目标不是硬撑得更久，<br>而是越来越了解自己的注意力。</h2>
+        <p>在你设定的区间里，提示音会随机响起。你无法预判它，所以每一次响起，都是一次诚实的自我检查：刚才，我还在吗？</p>
+      </header>
+
+      <div class="tl-card" data-reveal>
+        <div class="tl-top">
+          <div>
+            <b>一轮 60 分钟的专注</b>
+            <p id="tlSummary">本轮共 14 次随机提示，平均间隔 4.0 分钟</p>
+          </div>
+          <div class="tl-controls">
+            <div class="seg" role="radiogroup" aria-label="随机提示区间">
+              <button type="button" role="radio" aria-checked="true" data-range="3,5">3–5 分钟</button>
+              <button type="button" role="radio" aria-checked="false" data-range="5,10">5–10 分钟</button>
+              <button type="button" role="radio" aria-checked="false" data-range="8,17">8–17 分钟</button>
+            </div>
+            <button type="button" class="btn btn-ghost btn-xs" id="tlReroll"><svg class="i"><use href="#i-refresh"/></svg>重新随机</button>
+          </div>
+        </div>
+
+        <div class="tl-plot">
+          <div class="tl-bells" id="tlBells"></div>
+          <div class="tl-track"><div class="tl-fill"></div><div class="tl-head"></div></div>
+          <div class="tl-marks" id="tlMarks"></div>
+          <div class="tl-axis"><span>0</span><span>15</span><span>30</span><span>45</span><span>60 分钟</span></div>
+        </div>
+
+        <div class="tl-legend">
+          <span><svg class="i" style="color:var(--mint)"><use href="#i-bell"/></svg>随机提示 + 10 秒微休息</span>
+          <span><i class="lg-dot" style="background:var(--coral)"></i>记录走神</span>
+          <span><i class="lg-dot" style="background:var(--amber)"></i>记录疲劳</span>
+        </div>
+      </div>
+
+      <ol class="steps">
+        <li data-reveal>
+          <span class="step-no">01</span>
+          <h3>设计这一轮</h3>
+          <p>选择任务、专注时长和随机提示区间，再标记一下开始前的精力。开始后设置会锁定，避免反复调整。</p>
+        </li>
+        <li data-reveal style="--d:.06s">
+          <span class="step-no">02</span>
+          <h3>随机提示，微休息</h3>
+          <p>提示音在区间内随机响起，随后是十秒微休息：闭眼、松肩、慢呼吸。计时只统计净专注时间。</p>
+        </li>
+        <li data-reveal style="--d:.12s">
+          <span class="step-no">03</span>
+          <h3>一键记录走神</h3>
+          <p>注意力掉线了？点一下「我走神了」或「我开始累了」。发现走神，本身就是注意力回来了。</p>
+        </li>
+        <li data-reveal style="--d:.18s">
+          <span class="step-no">04</span>
+          <h3>复盘，然后进步</h3>
+          <p>每轮结束记录评分、精力变化和备注。洞察会估计你的稳定专注时长，并给出下一轮的建议。</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 功能 ============ -->
+  <section class="section" id="features">
+    <div class="container">
+      <header class="sec-head" data-reveal>
+        <span class="eyebrow">Features</span>
+        <h2>为专注而生的每一个细节</h2>
+        <p>从计时到复盘，每个功能都只为一件事：让你更安静地待在眼前的任务里。</p>
+      </header>
+
+      <div class="bento">
+        <article class="bx bx-wide bx-float" data-reveal>
+          <div class="bx-copy">
+            <span class="bx-ic"><svg class="i"><use href="#i-pip"/></svg></span>
+            <h3>悬浮倒计时</h3>
+            <p>最小化主窗口后，倒计时和「我走神了 / 我开始累了」会悬浮在所有窗口之上，切换桌面也跟着你。</p>
+          </div>
+          <div class="bx-visual float-scene" aria-hidden="true">
+            <div class="doc">
+              <i style="width:62%"></i><i style="width:88%"></i><i style="width:80%"></i><i style="width:92%"></i><i style="width:46%"></i>
+              <i class="gap" style="width:84%"></i><i style="width:90%"></i><i style="width:70%"></i><i style="width:86%"></i><i style="width:38%"></i>
+            </div>
+            <div class="floater floater-demo">
+              <div class="fl-top">
+                <div class="fl-ring">
+                  <svg viewBox="0 0 49 49"><circle class="fr-track" cx="24.5" cy="24.5" r="22"/><circle class="fr-bar" cx="24.5" cy="24.5" r="22" pathLength="1000" style="stroke-dashoffset:640"/></svg>
+                  <svg class="i ic-focus"><use href="#i-leaf-f"/></svg>
+                </div>
+                <div class="fl-text"><small><i></i><span>专注中</span></small><strong>21:07</strong></div>
+                <div class="fl-btns"><span><svg class="i"><use href="#i-pause"/></svg></span><span><svg class="i"><use href="#i-expand"/></svg></span></div>
+              </div>
+              <div class="fl-signals">
+                <span class="coral"><svg class="i"><use href="#i-scope"/></svg>我走神了<b>2</b></span>
+                <span class="amber"><svg class="i"><use href="#i-battery"/></svg>我开始累了<b>0</b></span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="bx bx-duration" data-reveal style="--d:.06s">
+          <span class="bx-ic"><svg class="i"><use href="#i-hourglass"/></svg></span>
+          <h3>任意时长</h3>
+          <p>从 1 分钟的热身，到一整天的长线任务，按你的节奏来。</p>
+          <div class="big-range"><b>1</b><span>—</span><b>1440</b><em>分钟</em></div>
+          <div class="chip-row"><span>30</span><span class="on">60</span><span>90</span><span class="ghost">自定义</span></div>
+        </article>
+
+        <article class="bx" data-reveal>
+          <span class="bx-ic"><svg class="i"><use href="#i-tag"/></svg></span>
+          <h3>按任务统计</h3>
+          <p>每轮选择或新增任务，按任务统计专注分钟、轮数和平均评分。</p>
+          <ul class="task-bars">
+            <li><span>论文写作</span><i style="--w:92%"></i><b>18.5 h</b></li>
+            <li><span>力扣</span><i style="--w:61%"></i><b>12.2 h</b></li>
+            <li><span>AI 学习</span><i style="--w:40%"></i><b>8.0 h</b></li>
+            <li><span>阅读</span><i style="--w:24%"></i><b>4.8 h</b></li>
+          </ul>
+        </article>
+
+        <article class="bx" data-reveal style="--d:.06s">
+          <span class="bx-ic"><svg class="i"><use href="#i-star"/></svg></span>
+          <h3>每轮复盘</h3>
+          <p>结束时记下专注评分、精力变化和一句备注，数据才有温度。</p>
+          <div class="review">
+            <div class="rv-row"><span>专注评分</span><span class="stars"><svg class="i"><use href="#i-star"/></svg><svg class="i"><use href="#i-star"/></svg><svg class="i"><use href="#i-star"/></svg><svg class="i"><use href="#i-star"/></svg><svg class="i off"><use href="#i-star"/></svg></span></div>
+            <div class="rv-row"><span>精力变化</span><span class="energy"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><svg class="i"><use href="#i-arrow-right"/></svg><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span></div>
+            <p class="rv-note">“后半段有点困，下次试试 50 分钟。”</p>
+          </div>
+        </article>
+
+        <article class="bx" data-reveal style="--d:.12s">
+          <span class="bx-ic"><svg class="i"><use href="#i-menubar"/></svg></span>
+          <h3>菜单栏计时</h3>
+          <p>不打开主窗口，也能在菜单栏查看倒计时、暂停和记录走神。</p>
+          <div class="menubar-demo" aria-hidden="true">
+            <div class="mb-strip"><span class="mb-dots"><i></i><i></i><i></i></span><span class="mb-leaf"><svg class="i"><use href="#i-leaf-f"/></svg></span><span>周四 15:42</span></div>
+            <div class="mb-pop">
+              <div class="mb-title"><svg class="i"><use href="#i-leaf-f"/></svg>专注中</div>
+              <strong>38:24</strong>
+              <div class="mb-btns"><span>暂停</span><span>我走神了</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="bx bx-wide bx-music" data-reveal>
+          <div class="bx-copy">
+            <span class="bx-ic coral"><svg class="i"><use href="#i-music"/></svg></span>
+            <h3>专注结束，音乐响起</h3>
+            <p>一轮结束后，自动播放音乐作为给自己的小奖励。Apple Music 支持从整个资料库或指定播放列表随机播放，也可以选择网易云音乐。</p>
+          </div>
+          <div class="bx-visual music-flow" aria-hidden="true">
+            <div class="mf-done"><span class="mf-check"><svg class="i"><use href="#i-check"/></svg></span><div><b>这一轮完成了</b><em>60 分钟 · 论文写作</em></div></div>
+            <div class="mf-line"></div>
+            <div class="mf-services">
+              <div class="svc on"><span class="svc-ic am"><svg class="i"><use href="#i-music"/></svg></span><div><b>Apple Music</b><em>从资料库随机播放</em></div><span class="eq"><i></i><i></i><i></i><i></i></span></div>
+              <div class="svc"><span class="svc-ic ne"><svg class="i"><use href="#i-cloud"/></svg></span><div><b>网易云音乐</b><em>继续播放</em></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="bx" data-reveal style="--d:.06s">
+          <span class="bx-ic"><svg class="i"><use href="#i-bell"/></svg></span>
+          <h3>提示音随你挑</h3>
+          <p>自定义提示音与微休息秒数。选择「随机」，每次提示都换一种声音。</p>
+          <div class="chip-row wrap">
+            <span class="on">随机</span><span>Glass</span><span>Ping</span><span>Pop</span><span>Tink</span><span>Submarine</span><span>Purr</span><span>Morse</span>
+          </div>
+        </article>
+      </div>
+
+      <ul class="more-list" data-reveal>
+        <li><svg class="i"><use href="#i-moon"/></svg>日间 / 夜间模式一键切换</li>
+        <li><svg class="i"><use href="#i-refresh"/></svg>被打断的轮次可以放弃，不计入统计</li>
+        <li><svg class="i"><use href="#i-chart"/></svg>最近 7 天专注时长与质量趋势</li>
+        <li><svg class="i"><use href="#i-file"/></svg>全部记录可导出 CSV</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 环境音 ============ -->
+  <section class="section section-sounds" id="sounds">
+    <div class="sounds-glow" aria-hidden="true"></div>
+    <div class="container">
+      <header class="sec-head" data-reveal>
+        <span class="eyebrow">Ambient sounds</span>
+        <h2>把世界的音量，<br>调到刚刚好。</h2>
+        <p>雨声、海浪、溪流、风声、篝火、鸟鸣、虫鸣，全部来自真实录音并处理成无缝循环，再加一轨本机实时生成的棕噪音。叠加混音、分别调音量，随专注自动播放。</p>
+      </header>
+
+      <div class="mixer" data-reveal>
+        <div class="mx-head">
+          <span class="mx-ic" id="mxIcon"><svg class="i"><use href="#i-wave"/></svg></span>
+          <div class="mx-title">
+            <b>在这里试听</b>
+            <p id="mxStatus">点选任意声音开始播放，可以同时叠加多种</p>
+          </div>
+          <label class="mx-master">
+            <svg class="i"><use href="#i-volume"/></svg>
+            <input type="range" id="mxMaster" min="0" max="1" step="0.01" value="0.7" aria-label="总音量">
+          </label>
+          <button type="button" class="btn btn-primary btn-sm" id="mxToggle" disabled>
+            <svg class="i show-play"><use href="#i-play"/></svg><svg class="i show-pause"><use href="#i-pause"/></svg><span>播放</span>
+          </button>
+        </div>
+        <div class="mx-grid" id="mxGrid">
+          <!-- 由 main.js 生成 -->
+        </div>
+      </div>
+      <p class="fineprint" data-reveal>录音来自 Freesound，均为 CC0 公共领域授权。网页试听版经过压缩，App 内为 160 kbps 无缝循环原声。</p>
+    </div>
+  </section>
+
+  <!-- ============ 洞察 ============ -->
+  <section class="section" id="insights">
+    <div class="container">
+      <header class="sec-head" data-reveal>
+        <span class="eyebrow">Attention lab</span>
+        <h2>看见你的注意力节律</h2>
+        <p>用趋势做调整，不用某一次状态定义自己。专注芽根据走神前的时长、完成率、主观评分和精力变化，估计你当前能稳定专注多久，并建议下一轮的长度。</p>
+      </header>
+
+      <div class="dash" data-reveal>
+        <div class="metrics">
+          <div class="metric" style="--tint:var(--mint)">
+            <div class="m-top"><svg class="i"><use href="#i-sprout"/></svg><i></i></div>
+            <b>35 分钟</b><span>当前稳定专注估计</span><em>走神前时长的中位估计</em>
+          </div>
+          <div class="metric" style="--tint:var(--blue)">
+            <div class="m-top"><svg class="i"><use href="#i-trend"/></svg><i></i></div>
+            <b>40 分钟</b><span>下一轮建议</span><em>连续稳定后每次只加 5 分钟</em>
+          </div>
+          <div class="metric" style="--tint:var(--coral)">
+            <div class="m-top"><svg class="i"><use href="#i-scope"/></svg><i></i></div>
+            <b>2.4 次/时</b><span>平均走神率</span><em>每小时主动记录次数</em>
+          </div>
+          <div class="metric" style="--tint:var(--amber)">
+            <div class="m-top"><svg class="i"><use href="#i-bolt"/></svg><i></i></div>
+            <b>−0.6 格</b><span>平均精力变化</span><em>开始与结束的主观差值</em>
+          </div>
+        </div>
+
+        <div class="dash-row">
+          <div class="panel chart-week">
+            <div class="panel-head"><b>最近 7 天专注时长</b><span>分钟</span></div>
+            <div class="bars" id="weekBars"></div>
+          </div>
+          <div class="panel plan">
+            <div class="panel-head"><b>渐进训练</b><span>建议</span></div>
+            <div class="plan-num"><b>40</b><em>分钟</em></div>
+            <p>连续三轮状态良好后，只增加 5 分钟。慢一点，但每一步都站得稳。</p>
+            <ol class="plan-steps">
+              <li class="done"><span>25</span></li>
+              <li class="done"><span>30</span></li>
+              <li class="done"><span>35</span></li>
+              <li class="now"><span>40</span></li>
+              <li><span>45</span></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="panel chart-trend">
+          <div class="panel-head"><b>专注质量趋势</b><span>最近 10 轮 · 每轮复盘评分（1–5）</span></div>
+          <div class="trend" id="trend"></div>
+        </div>
+      </div>
+      <p class="fineprint" data-reveal>“专注能力”是基于你个人记录的趋势估计，不是医学诊断。若注意力变化持续影响生活，值得咨询专业人士。</p>
+    </div>
+  </section>
+
+  <!-- ============ 隐私 ============ -->
+  <section class="section" id="privacy">
+    <div class="container privacy">
+      <div class="pv-copy" data-reveal>
+        <span class="eyebrow">Privacy</span>
+        <h2>你的注意力数据，<br>只属于你。</h2>
+        <p>专注芽不需要注册，也不连接任何服务器。每一轮记录都只保存在你的 Mac 上，随时可以导出为 CSV，或者整个删掉。</p>
+        <div class="path">
+          <span class="path-label">数据位置</span>
+          <code>~/Library/Application Support/FocusBloom/focus-data.json</code>
+        </div>
+      </div>
+      <ul class="pv-list" data-reveal style="--d:.08s">
+        <li><span><svg class="i"><use href="#i-user-off"/></svg></span><div><b>不需要注册或登录</b><p>没有账号体系，也就没有需要保护的密码。</p></div></li>
+        <li><span><svg class="i"><use href="#i-cloud-off"/></svg></span><div><b>不上传专注记录</b><p>时长、走神、精力和备注，从不离开这台 Mac。</p></div></li>
+        <li><span><svg class="i"><use href="#i-eye-off"/></svg></span><div><b>不含分析 SDK 或广告</b><p>没有埋点，没有推荐位，只有你和你的任务。</p></div></li>
+        <li><span><svg class="i"><use href="#i-file"/></svg></span><div><b>数据完全可带走</b><p>一键导出 CSV，用你喜欢的工具继续分析。</p></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 下载 ============ -->
+  <section class="section section-download" id="download">
+    <div class="dl-bg" aria-hidden="true">
+      <div class="dl-bg-center">
+        <span class="orbit o1"></span>
+        <span class="orbit o2"><i class="orbit-dot"></i></span>
+      </div>
+    </div>
+    <div class="container">
+      <div class="dl-head" data-reveal>
+        <img class="dl-icon" src="assets/img/icon-512.png" alt="专注芽 App 图标" width="148" height="148">
+        <h2>今天，练习一次完整的注意。</h2>
+        <p>免费下载专注芽，把第一轮专注留给最重要的那件事。</p>
+      </div>
+
+      <div class="dl-cards">
+        <div class="dl-card main" data-reveal>
+          <div class="dl-card-top">
+            <span class="dl-badge">推荐</span>
+            <h3>官网直接下载</h3>
+            <p>一键下载，无需跳转，解压即用。</p>
+          </div>
+          <dl class="dl-meta">
+            <div><dt>版本</dt><dd data-text="version">v1.1.0</dd></div>
+            <div><dt>格式</dt><dd data-text="format">.zip</dd></div>
+            <div><dt>系统</dt><dd data-text="requirement">macOS 14+ · Apple 芯片</dd></div>
+          </dl>
+          <a class="btn btn-primary btn-lg btn-block" data-link="download" href="downloads/FocusBloom-macOS.zip">
+            <svg class="i"><use href="#i-download"/></svg>下载专注芽
+          </a>
+        </div>
+
+        <div class="dl-card" data-reveal style="--d:.06s">
+          <div class="dl-card-top">
+            <span class="dl-badge ghost">GitHub</span>
+            <h3>GitHub Releases</h3>
+            <p>查看全部版本、更新日志与 SHA-256 校验值。</p>
+          </div>
+          <dl class="dl-meta">
+            <div><dt>仓库</dt><dd>XiangXiaoYuan5254/FocusBloom</dd></div>
+            <div><dt>历史版本</dt><dd>全部可下载</dd></div>
+            <div><dt>源码</dt><dd>Swift · SwiftUI</dd></div>
+          </dl>
+          <a class="btn btn-ghost btn-lg btn-block" data-link="releases" href="https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest" target="_blank" rel="noopener">
+            <svg class="i"><use href="#i-github"/></svg>前往 GitHub 下载
+          </a>
+        </div>
+      </div>
+
+      <div class="install" data-reveal>
+        <h3>安装只需三步</h3>
+        <ol>
+          <li><span>1</span><div><b>解压并拖入「应用程序」</b><p>双击下载的 .zip 解压，把「专注芽」拖进「应用程序」文件夹。</p></div></li>
+          <li><span>2</span><div><b>首次打开时确认一次</b><p>专注芽目前未经 Apple 公证。若提示“无法验证开发者”，前往「系统设置 → 隐私与安全性」，点击「仍要打开」。</p></div></li>
+          <li><span>3</span><div><b>开始第一轮</b><p>选好任务和时长，按下「开始这一轮」。先只做好眼前的一小段。</p></div></li>
+        </ol>
+      </div>
+
+      <div class="source" data-reveal>
+        <div class="source-copy">
+          <h3>或者，从源码构建</h3>
+          <p>需要 Xcode Command Line Tools（Swift 5.10+）。构建结果位于 <code>dist/专注芽.app</code>。</p>
+        </div>
+        <div class="code">
+          <div class="code-bar">
+            <span class="code-dots"><i></i><i></i><i></i></span>
+            <span>终端</span>
+            <button type="button" class="copy" data-copy="#buildCmd" aria-label="复制命令"><svg class="i"><use href="#i-copy"/></svg><span>复制</span></button>
+          </div>
+<pre id="buildCmd"><span class="c-dim">$</span> git clone https://github.com/XiangXiaoYuan5254/FocusBloom.git
+<span class="c-dim">$</span> cd FocusBloom
+<span class="c-dim">$</span> zsh Scripts/package_app.sh</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section" id="faq">
+    <div class="container faq-wrap">
+      <header class="sec-head left" data-reveal>
+        <span class="eyebrow">FAQ</span>
+        <h2>常见问题</h2>
+        <p>没找到答案？欢迎到 <a data-link="issues" href="https://github.com/XiangXiaoYuan5254/FocusBloom/issues" target="_blank" rel="noopener">GitHub Issues</a> 提问。</p>
+      </header>
+      <div class="faq" data-reveal style="--d:.06s">
+        <details>
+          <summary>打开时提示“无法验证开发者”怎么办？<svg class="i"><use href="#i-chevron-down"/></svg></summary>
+          <div class="faq-a">
+            <p>专注芽使用本地签名，尚未经过 Apple 公证，这是 macOS 对所有未公证 App 的默认提示。打开「系统设置 → 隐私与安全性」，在页面下方找到专注芽，点击「仍要打开」即可。macOS 14 上也可以按住 Control 点按 App，选择「打开」。</p>
+            <p>熟悉终端的话，也可以运行：</p>
+            <code class="block">xattr -dr com.apple.quarantine /Applications/专注芽.app</code>
+          </div>
+        </details>
+        <details>
+          <summary>需要联网或注册账号吗？<svg class="i"><use href="#i-chevron-down"/></svg></summary>
+          <div class="faq-a"><p>都不需要。环境音已内置在 App 中，棕噪音由本机实时生成。唯一会和其他 App 交互的，是你主动开启的「专注结束后播放音乐」。</p></div>
+        </details>
+        <details>
+          <summary>我的数据保存在哪里？怎么备份或删除？<svg class="i"><use href="#i-chevron-down"/></svg></summary>
+          <div class="faq-a">
+            <p>所有记录保存在 <code>~/Library/Application Support/FocusBloom/focus-data.json</code>。你可以直接备份这个文件，也可以在 App 中导出 CSV。</p>
+            <p>删除 App 不会自动删除数据文件；如需彻底清除，手动删除 <code>FocusBloom</code> 文件夹即可。</p>
+          </div>
+        </details>
+        <details>
+          <summary>为什么会请求控制“音乐”或“辅助功能”的权限？<svg class="i"><use href="#i-chevron-down"/></svg></summary>
+          <div class="faq-a"><p>只有开启「专注结束后自动播放音乐」时才需要。使用 Apple Music 时，macOS 会询问是否允许专注芽控制“音乐”App；使用网易云音乐时，需要在「系统设置 → 隐私与安全性 → 辅助功能」中允许专注芽。不开启这个功能，就不会有任何权限请求。</p></div>
+        </details>
+        <details>
+          <summary>“专注能力”是医学诊断吗？<svg class="i"><use href="#i-chevron-down"/></svg></summary>
+          <div class="faq-a"><p>不是。它是根据你近期走神前时长、完成率、主观专注评分和精力变化给出的个人趋势估计，用来帮你安排下一轮，而不是给自己贴标签。</p></div>
+        </details>
+        <details>
+          <summary>支持 Intel Mac 或 Windows 吗？<svg class="i"><use href="#i-chevron-down"/></svg></summary>
+          <div class="faq-a"><p>目前的安装包面向搭载 Apple 芯片、运行 macOS 14 或更高版本的 Mac。Intel Mac 可以按上面的步骤从源码构建。暂不支持 Windows。</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container foot-inner">
+    <div class="foot-brand">
+      <a class="brand" href="#top">
+        <img src="assets/img/icon-512.png" alt="" width="36" height="36">
+        <span class="brand-name">专注芽</span>
+        <span class="brand-en">FocusBloom</span>
+      </a>
+      <p>让注意力，慢慢发芽。<br>本地优先的 macOS 专注训练工具。</p>
+    </div>
+    <div class="foot-cols">
+      <div>
+        <h4>产品</h4>
+        <a href="#how">工作方式</a>
+        <a href="#features">功能</a>
+        <a href="#sounds">环境音</a>
+        <a href="#download">下载</a>
+      </div>
+      <div>
+        <h4>资源</h4>
+        <a data-link="github" href="https://github.com/XiangXiaoYuan5254/FocusBloom" target="_blank" rel="noopener">GitHub</a>
+        <a data-link="releases" href="https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest" target="_blank" rel="noopener">更新日志</a>
+        <a data-link="issues" href="https://github.com/XiangXiaoYuan5254/FocusBloom/issues" target="_blank" rel="noopener">问题反馈</a>
+        <a data-link="credits" href="https://github.com/XiangXiaoYuan5254/FocusBloom/blob/main/Resources/Ambient/CREDITS.md" target="_blank" rel="noopener">环境音素材来源</a>
+      </div>
+    </div>
+  </div>
+  <div class="container foot-bottom">
+    <span>© <span data-text="year">2026</span> 专注芽 FocusBloom · 为 macOS 用心打造</span>
+    <span>灵感来自 <a class="foot-credit" href="https://www.bilibili.com/video/BV1naLozQEBq/" target="_blank" rel="noopener">择恩《为什么我能每天学习10小时》</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

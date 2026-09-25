@@ -184,13 +184,28 @@ struct SettingsView: View {
     }
 
     private var musicSettings: some View {
-        settingsCard(title: "Apple Music", subtitle: "一轮结束后，用一首随机歌曲切换状态", symbol: "music.note") {
-            Toggle("结束后自动随机播放", isOn: $store.settings.autoPlayMusic)
+        let service = store.settings.resolvedMusicService
+        return settingsCard(title: "结束音乐", subtitle: "一轮结束后，用音乐切换状态", symbol: service.symbol) {
+            Toggle(service == .appleMusic ? "结束后自动随机播放" : "结束后自动播放当前队列", isOn: $store.settings.autoPlayMusic)
                 .toggleStyle(.switch)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(BloomTheme.primaryText)
 
             if store.settings.autoPlayMusic {
+                settingRow(title: "音乐服务", detail: "选择专注结束时控制的播放器") {
+                    Picker("", selection: Binding<MusicService>(
+                        get: { store.settings.resolvedMusicService },
+                        set: { store.settings.musicService = $0 }
+                    )) {
+                        ForEach(MusicService.allCases) { option in
+                            Label(option.rawValue, systemImage: option.symbol).tag(option)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 145)
+                }
+
+                if service == .appleMusic {
                 settingRow(title: "歌曲范围", detail: "从资料库或指定列表中随机") {
                     Picker("", selection: $store.settings.musicSource) {
                         ForEach(MusicSource.allCases) { Text($0.rawValue).tag($0) }
@@ -211,22 +226,28 @@ struct SettingsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
+                } else {
+                    Text("网易云音乐会在后台打开客户端并播放当前队列，已在播放时不会被打断。需要在系统设置中允许辅助功能控制，重新打包后要重新授权。")
+                        .font(.system(size: 10))
+                        .foregroundStyle(BloomTheme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("首次测试会出现系统授权")
+                        Text(service == .appleMusic ? "首次测试会出现系统授权" : "首次使用需开启辅助功能权限")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(BloomTheme.primaryText)
-                        Text("请选择“允许”专注芽控制“音乐”。")
+                        Text(service == .appleMusic ? "请选择“允许”专注芽控制“音乐”。" : "请在系统设置中允许专注芽控制网易云音乐。")
                             .font(.system(size: 9))
                             .foregroundStyle(BloomTheme.secondaryText)
                     }
                     Spacer()
-                    Button("测试随机播放") {
+                    Button(service == .appleMusic ? "测试随机播放" : "测试播放") {
                         store.testMusic()
                     }
                     .buttonStyle(BloomSecondaryButtonStyle())
-                    .disabled(store.settings.musicSource == .playlist && store.settings.playlistName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(service == .appleMusic && store.settings.musicSource == .playlist && store.settings.playlistName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
 
                 if let message = store.musicMessage {

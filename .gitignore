@@ -8,3 +8,6 @@ DerivedData/
 # Local runtime data and exports
 focus-data.json
 *.csv
+
+# 官网直链安装包：体积大，不入库，部署时单独上传（缺失时页面会回退到 GitHub Release）
+website/downloads/*.zip

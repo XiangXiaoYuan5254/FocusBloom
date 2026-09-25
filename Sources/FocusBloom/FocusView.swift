@@ -22,6 +22,8 @@ struct FocusView: View {
                 } else {
                     trainingHint
                 }
+
+                AmbientSoundsCard()
             }
             .padding(.horizontal, 30)
             .padding(.top, 34)
@@ -295,7 +297,7 @@ struct FocusView: View {
             VStack(alignment: .leading, spacing: 10) {
                 controlLabel("专注时长", value: "\(store.settings.selectedDurationMinutes) 分钟")
                 HStack(spacing: 8) {
-                    ForEach([30, 50, 90], id: \.self) { duration in
+                    ForEach([30, 60, 90], id: \.self) { duration in
                         durationButton(duration)
                     }
                     HStack(spacing: 4) {
@@ -370,9 +372,11 @@ struct FocusView: View {
             }
 
             HStack(spacing: 8) {
-                Image(systemName: "music.note")
+                Image(systemName: store.settings.autoPlayMusic ? store.settings.resolvedMusicService.symbol : "music.note")
                     .foregroundStyle(store.settings.autoPlayMusic ? BloomTheme.coral : BloomTheme.secondaryText)
-                Text(store.settings.autoPlayMusic ? "结束后随机播放 Apple Music" : "可在设置中开启结束音乐")
+                Text(store.settings.autoPlayMusic
+                    ? (store.settings.resolvedMusicService == .appleMusic ? "结束后随机播放 Apple Music" : "结束后播放网易云音乐")
+                    : "可在设置中开启结束音乐")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(BloomTheme.secondaryText)
             }

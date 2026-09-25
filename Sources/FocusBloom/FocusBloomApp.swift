@@ -6,19 +6,12 @@ final class FocusBloomAppDelegate: NSObject, NSApplicationDelegate {
         _ sender: NSApplication,
         hasVisibleWindows flag: Bool
     ) -> Bool {
-        guard let mainWindow = sender.windows.first(where: {
-            $0.identifier == FloatingTimerWindow.mainWindowIdentifier
-        }) else {
-            // Let SwiftUI recreate the main WindowGroup if it was fully closed.
-            return true
+        if MainWindowRestorer.restore(in: sender) {
+            return false
         }
 
-        if mainWindow.isMiniaturized {
-            mainWindow.deminiaturize(nil)
-        }
-        mainWindow.makeKeyAndOrderFront(nil)
-        sender.activate(ignoringOtherApps: true)
-        return false
+        // Let SwiftUI recreate the main WindowGroup if it was fully closed.
+        return true
     }
 }
 
@@ -346,6 +339,19 @@ struct MenuBarView: View {
                     .foregroundStyle(.secondary)
                 Button("开始 \(store.settings.selectedDurationMinutes) 分钟") {
                     store.startSession()
+                }
+            }
+
+            Divider()
+
+            HStack {
+                Image(systemName: "waveform")
+                    .foregroundStyle(BloomTheme.mint)
+                Text(store.isAmbientPlaying ? "环境音播放中" : "环境音")
+                    .font(.subheadline)
+                Spacer()
+                Button(store.isAmbientPlaying ? "暂停" : "播放") {
+                    store.toggleAmbientPlayback()
                 }
             }
         }

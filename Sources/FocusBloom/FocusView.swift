@@ -375,7 +375,7 @@ struct FocusView: View {
                 Image(systemName: store.settings.autoPlayMusic ? store.settings.resolvedMusicService.symbol : "music.note")
                     .foregroundStyle(store.settings.autoPlayMusic ? BloomTheme.coral : BloomTheme.secondaryText)
                 Text(store.settings.autoPlayMusic
-                    ? (store.settings.resolvedMusicService == .appleMusic ? "结束后随机播放 Apple Music" : "结束后播放网易云音乐")
+                    ? (store.settings.resolvedMusicService == .appleMusic ? "结束后随机播放 Apple Music" : "结束后播放网易云下一首")
                     : "可在设置中开启结束音乐")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(BloomTheme.secondaryText)

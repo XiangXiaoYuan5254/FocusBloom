@@ -117,13 +117,16 @@ enum MusicController {
         return true
     }
 
-    /// 网易云音乐 macOS 客户端没有公开 AppleScript 字典，只能通过“控制”菜单的第一项播放当前队列。
-    /// 这一项是开关：暂停时叫“播放”，播放中叫“暂停”，所以先读状态再点，点完再确认状态真的变了。
+    /// 网易云音乐 macOS 客户端没有公开 AppleScript 字典，只能通过“控制”菜单操作。
+    /// 菜单第一项是开关（暂停时叫“播放”，播放中叫“暂停”），用它读播放状态；暂停时点“下一个”，
+    /// 客户端会切到下一首并从头播放，而不是接着放上次停下的那首。点完再确认状态真的变成了播放。
     /// 菜单点击不需要客户端在前台，也就不会抢走专注芽的焦点。
     private static func netEaseScript(timeout: Int) -> String {
         """
         set playNames to {"播放", "Play"}
         set pauseNames to {"暂停", "Pause"}
+        set nextNames to {"下一个", "Next"}
+        set clickCount to 0
         set deadline to (current date) + \(timeout)
         set lastClick to missing value
         set lastProblem to "网易云音乐还没有准备好"
@@ -140,12 +143,20 @@ enum MusicController {
                     set itemName to name of playItem
                     if itemName is in pauseNames then
                         if lastClick is missing value then return "网易云音乐（原本就在播放）"
-                        return "网易云音乐当前队列"
+                        return "网易云音乐的下一首"
                     end if
                     if itemName is not in playNames then error "无法识别网易云音乐的播放菜单：" & itemName
-                    -- 冷启动时队列可能还没加载完，第一次点击会被忽略；间隔几秒再补点，避免把刚开始的播放又点成暂停。
+                    -- 冷启动时队列可能还没加载完，点击会被忽略；间隔几秒再补点。
+                    -- 前两次点“下一个”，还不行再退回点“播放”，至少保证有歌响起。
                     if enabled of playItem and (lastClick is missing value or ((current date) - lastClick) >= 3) then
-                        click playItem
+                        set target to playItem
+                        if clickCount < 2 then
+                            repeat with candidate in menu items of controlMenu
+                                if name of candidate is in nextNames and enabled of candidate then set target to contents of candidate
+                            end repeat
+                        end if
+                        click target
+                        set clickCount to clickCount + 1
                         set lastClick to current date
                     end if
                 on error errMsg number errNum

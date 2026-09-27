@@ -1,0 +1,75 @@
+{
+  "name": "focusbloom-windows",
+  "productName": "专注芽",
+  "version": "1.1.0",
+  "private": true,
+  "description": "专注芽 FocusBloom：本地优先的专注训练工具（Windows 版）",
+  "main": "src/main/main.js",
+  "author": "xxy",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "icons": "electron scripts/render-icons.js",
+    "prepare-renderer": "node scripts/prepare-renderer.js",
+    "test": "node --test test/",
+    "dist": "electron-builder --win --x64 --publish never",
+    "dist:arm64": "electron-builder --win --arm64 --publish never",
+    "smoke-test": "node scripts/smoke-test.js"
+  },
+  "devDependencies": {
+    "electron": "^41.7.1",
+    "electron-builder": "^26.15.3",
+    "htm": "^3.1.1",
+    "lucide-static": "^1.48.0",
+    "preact": "^10.29.8"
+  },
+  "build": {
+    "appId": "com.local.FocusBloom",
+    "productName": "专注芽",
+    "executableName": "FocusBloom",
+    "copyright": "专注芽 FocusBloom",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*.png",
+      "package.json",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../Resources/Ambient",
+        "to": "Ambient",
+        "filter": [
+          "*.m4a",
+          "CREDITS.md"
+        ]
+      }
+    ],
+    "asar": true,
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "artifactName": "FocusBloom-Windows-Portable-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "专注芽",
+      "uninstallDisplayName": "专注芽 FocusBloom",
+      "installerLanguages": [
+        "zh_CN"
+      ],
+      "language": "2052",
+      "artifactName": "FocusBloom-Windows-Setup-${arch}.${ext}"
+    }
+  }
+}

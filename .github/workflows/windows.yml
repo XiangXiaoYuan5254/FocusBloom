@@ -1,0 +1,100 @@
+# 在 GitHub 的 Windows 机器上构建并测试专注芽 Windows 版：
+# 单元测试 → 打包安装程序 → 启动真实的 FocusBloom.exe 走一遍主要功能并截图。
+# 截图、日志和安装包都会作为本次运行的产物（Artifacts）保存，可以在 Actions 页面下载。
+# 推送 v 开头的标签时，还会把安装包附加到同名的 GitHub Release（没有就先建一个草稿）。
+name: Windows 版
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - 'windows/**'
+      - 'Resources/Ambient/**'
+      - '.github/workflows/windows.yml'
+  pull_request:
+    paths:
+      - 'windows/**'
+      - 'Resources/Ambient/**'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: 构建并测试
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 单元测试
+        run: npm test
+
+      - name: 打包安装程序
+        run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: 端到端测试（启动真实的 FocusBloom.exe）
+        run: npm run smoke-test
+
+      - name: 保存测试截图和日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-screenshots
+          path: windows/smoke/
+          if-no-files-found: ignore
+
+      - name: 保存安装包
+        uses: actions/upload-artifact@v4
+        with:
+          name: FocusBloom-Windows
+          path: |
+            windows/dist/FocusBloom-Windows-Setup-x64.exe
+            windows/dist/FocusBloom-Windows-Portable-x64.zip
+          if-no-files-found: error
+          compression-level: 0
+
+  release:
+    name: 附加到 GitHub Release
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: FocusBloom-Windows
+          path: assets
+
+      - name: 上传到 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "专注芽 $TAG" \
+              --notes "Windows 安装包由 GitHub Actions 自动构建。"
+          fi
+          gh release upload "$TAG" assets/* --repo "$GITHUB_REPOSITORY" --clobber

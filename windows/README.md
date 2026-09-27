@@ -53,7 +53,7 @@ npm run smoke-test # 端到端测试：启动真实的 App 走一遍主要功能
 
 `.github/workflows/windows.yml` 会在 GitHub 提供的 Windows 机器上自动运行：单元测试 → 打包 → 启动打包好的 `FocusBloom.exe` 做端到端测试（开始一轮、最小化出现悬浮窗、记录走神、环境音、一轮结束后复盘并存档、通过系统媒体控制调用播放器、各页面截图）。
 
-- 改动 `windows/`、`Resources/Ambient/` 或工作流本身的提交和 Pull Request 会自动触发，也可以在 Actions 页面手动运行。
+- 改动 `windows/`、`Resources/Ambient/` 或工作流本身的提交和 Pull Request 会自动触发（只改 `windows/` 里的 .md 说明文档时不触发），也可以在 Actions 页面手动运行。
 - 每次运行都会保存测试截图和安装包（Artifacts），不用自己的 Windows 电脑也能下载安装包、看到界面在 Windows 上的样子。
 - 推送 `v` 开头的标签时，安装包会自动附加到同名的 GitHub Release（没有就先建一个草稿）。
 

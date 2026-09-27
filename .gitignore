@@ -11,3 +11,7 @@ focus-data.json
 
 # 官网只保存在本地，不公开到 GitHub
 website/
+
+# Windows 版（windows/）的依赖和测试截图；安装包在 dist/ 里，上面已经忽略
+node_modules/
+windows/smoke/

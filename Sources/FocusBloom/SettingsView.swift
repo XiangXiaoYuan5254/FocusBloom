@@ -186,7 +186,7 @@ struct SettingsView: View {
     private var musicSettings: some View {
         let service = store.settings.resolvedMusicService
         return settingsCard(title: "结束音乐", subtitle: "一轮结束后，用音乐切换状态", symbol: service.symbol) {
-            Toggle(service == .appleMusic ? "结束后自动随机播放" : "结束后自动播放当前队列", isOn: $store.settings.autoPlayMusic)
+            Toggle(service == .appleMusic ? "结束后自动随机播放" : "结束后自动播放下一首", isOn: $store.settings.autoPlayMusic)
                 .toggleStyle(.switch)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(BloomTheme.primaryText)
@@ -227,7 +227,7 @@ struct SettingsView: View {
                     }
                 }
                 } else {
-                    Text("网易云音乐会在后台打开客户端并播放当前队列，已在播放时不会被打断。需要在系统设置中允许辅助功能控制，重新打包后要重新授权。")
+                    Text("专注结束时，网易云会切到播放列表的下一首并从头播放；把网易云的播放模式设为“随机播放”，就是每次随机换一首。已在播放时不会打断。需要在系统设置中允许辅助功能控制，重新打包后要重新授权。")
                         .font(.system(size: 10))
                         .foregroundStyle(BloomTheme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)

@@ -49,6 +49,13 @@
       }
     ],
     "asar": true,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "XiangXiaoYuan5254",
+        "repo": "FocusBloom"
+      }
+    ],
     "win": {
       "icon": "build/icon.ico",
       "target": [
@@ -71,5 +78,8 @@
       "language": "2052",
       "artifactName": "FocusBloom-Windows-Setup-${arch}.${ext}"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.10"
   }
 }

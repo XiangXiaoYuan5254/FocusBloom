@@ -80,6 +80,7 @@
       runtime,
       sessions,
       stats,
+      update: state.update,
       meta: state.meta,
       active: core.isSessionActive(phase),
       taskName: taskDisplayName(settings, runtime),
@@ -146,6 +147,7 @@
         )}
       </nav>
       <div class="sidebar-spacer"></div>
+      <${UpdateNotice} update=${ctx.update} active=${active} />
       <button type="button" class=${cx('appearance-toggle', dark ? 'tint-amber' : 'tint-blue')} onClick=${() => act('toggleAppearance')}>
         <span class="appearance-icon"><${Icon} name=${dark ? 'sun' : 'moon-star'} size=${14} /></span>
         <span>${dark ? '切换到日间模式' : '切换到夜间模式'}</span>
@@ -163,6 +165,26 @@
         </div>
       </div>
     </aside>`;
+  }
+
+  // 新版本下载好后（免安装版是发现新版本时）在侧边栏轻轻提示；专注中不显示，不打断这一轮。
+  function UpdateNotice({ update, active }) {
+    if (active || !update || (update.status !== 'downloaded' && update.status !== 'available')) return null;
+    const ready = update.status === 'downloaded';
+    return html`<div class="update-notice" role="status">
+      <div class="update-notice-title">
+        <${Icon} name="circle-arrow-down" size=${15} class="text-mint" />
+        <strong>新版本 v${update.version}</strong>
+      </div>
+      <p>${ready ? '已在后台下载好，重启即可完成更新。' : '免安装版需要下载新的压缩包替换。'}</p>
+      <${Button}
+        variant="primary"
+        class="btn-compact btn-block"
+        onClick=${() => window.bloom.command(ready ? 'install-update' : 'open-download-page')}
+      >
+        ${ready ? '重启并更新' : '前往下载'}
+      <//>
+    </div>`;
   }
 
   // ---- 专注页 ----
@@ -1136,6 +1158,7 @@
           <${SessionSettings} ctx=${ctx} />
           <${TaskSettings} ctx=${ctx} />
           <${DataSettings} ctx=${ctx} onClear=${() => setConfirmClear(true)} />
+          <${UpdateSettings} ctx=${ctx} />
           <${Card} strong class="philosophy-card" padding=${18}>
             <${Icon} name="quote" size=${17} class="text-mint" />
             <p>训练注意力，不是逼自己忽略疲劳；是更早发现疲劳、更准确地选择继续或休息。</p>
@@ -1409,6 +1432,59 @@
         清空专注记录
       <//>
       <p class="footnote data-path" title=${ctx.meta.dataFile}>${ctx.meta.dataFile}</p>
+    <//>`;
+  }
+
+  function updateStatusText(update, settings) {
+    switch (update.status) {
+      case 'checking':
+        return '正在检查新版本…';
+      case 'latest':
+        return '已是最新版本';
+      case 'downloading':
+        return `正在下载 v${update.version}（${update.percent}%）`;
+      case 'downloaded':
+        return `v${update.version} 已下载，重启即可更新`;
+      case 'available':
+        return `发现新版本 v${update.version}`;
+      case 'error':
+        return update.message;
+      case 'unsupported':
+        return '开发版不检查更新';
+      default:
+        return settings.autoCheckUpdates ? '启动后会自动检查' : '自动检查已关闭';
+    }
+  }
+
+  function UpdateSettings({ ctx }) {
+    const { settings, active } = ctx;
+    const update = ctx.update || { status: 'unsupported' };
+    const { status } = update;
+    const busy = status === 'checking' || status === 'downloading';
+    let action;
+    if (status === 'downloaded') {
+      action = html`<${Button} variant="primary" class="btn-compact btn-block" icon="refresh-cw" disabled=${active} onClick=${() => window.bloom.command('install-update')}>
+        重启并更新到 v${update.version}
+      <//>`;
+    } else if (status === 'available') {
+      action = html`<${Button} variant="primary" class="btn-compact btn-block" icon="circle-arrow-down" onClick=${() => window.bloom.command('open-download-page')}>
+        前往下载 v${update.version}
+      <//>`;
+    } else {
+      action = html`<${Button} class="btn-row" icon="refresh-cw" disabled=${busy || status === 'unsupported'} onClick=${() => window.bloom.command('check-update')}>
+        ${busy ? '正在检查…' : '检查更新'}
+      <//>`;
+    }
+    return html`<${SettingsCard} title="软件更新" subtitle="新版本会从 GitHub Release 下载" icon="circle-arrow-down">
+      <${SettingRow} title=${`当前版本 v${ctx.meta.version}`} detail=${updateStatusText(update, settings)} />
+      <${Toggle} class="toggle-row" checked=${settings.autoCheckUpdates} onChange=${(value) => updateSettings({ autoCheckUpdates: value })}>
+        <span class="toggle-copy">
+          <strong>自动检查更新</strong>
+          <span>${update.canInstall === false ? '发现新版本时提醒你下载' : '有新版本时在后台下载，退出专注芽时自动安装'}</span>
+        </span>
+      <//>
+      ${action}
+      ${status === 'downloaded' && active && html`<p class="footnote">专注结束后再更新，不会打断这一轮。</p>`}
     <//>`;
   }
 

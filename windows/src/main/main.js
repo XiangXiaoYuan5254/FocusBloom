@@ -19,10 +19,12 @@ const core = require('../shared/core');
 const { AppStore } = require('./store');
 const { createPersistence, buildCSV } = require('./persistence');
 const music = require('./music');
+const { Updater } = require('./updater');
 
 const ROOT = path.join(__dirname, '..', '..');
 const IS_WINDOWS = process.platform === 'win32';
 const APP_ID = 'com.local.FocusBloom';
+const RELEASES_URL = 'https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest';
 const RENDERER = path.join(ROOT, 'src', 'renderer');
 const AMBIENT_DIR = app.isPackaged
   ? path.join(process.resourcesPath, 'Ambient')
@@ -67,6 +69,7 @@ let persistence;
 let mainWindow;
 let floatingWindow;
 let tray;
+let updater;
 let quitting = false;
 let mainHidden = false;
 let floatingPosition = null;
@@ -74,6 +77,7 @@ let trayHintShown = false;
 let lastTrayActive = null;
 let lastProgressKey = '';
 let completionNotice = null;
+let updateNotice = null;
 const settingsAck = new Map();
 
 function dataDirectory() {
@@ -328,10 +332,12 @@ function trayMenu() {
   items.push(
     { type: 'separator' },
     { label: runtime.isAmbientPlaying ? '暂停环境音' : '播放环境音', click: () => store.toggleAmbientPlayback() },
-    { type: 'separator' },
-    { label: '打开专注芽', click: showMain },
-    { label: '退出专注芽', click: quitApp }
+    { type: 'separator' }
   );
+  if (updateState().status === 'downloaded' && !store.isSessionActive) {
+    items.push({ label: `重启并更新到 v${updateState().version}`, click: () => updater.install() });
+  }
+  items.push({ label: '打开专注芽', click: showMain }, { label: '退出专注芽', click: quitApp });
   return Menu.buildFromTemplate(items);
 }
 
@@ -417,6 +423,49 @@ async function exportCSV(sessions) {
   }
 }
 
+// ---- 自动更新 ----
+
+function createUpdater() {
+  // 冒烟测试用本地地址代替 GitHub Release，开发版也能走一遍检查流程。
+  const testFeed = process.env.FOCUSBLOOM_UPDATE_URL;
+  if (!testFeed && !(app.isPackaged && IS_WINDOWS)) return null;
+  const { autoUpdater } = require('electron-updater');
+  if (testFeed) {
+    autoUpdater.forceDevUpdateConfig = true;
+    autoUpdater.setFeedURL({ provider: 'generic', url: testFeed });
+  }
+  return new Updater({ autoUpdater, canInstall: isInstalled(), isEnabled: () => store.settings.autoCheckUpdates });
+}
+
+// 安装版的目录里有 NSIS 卸载程序；免安装版（zip 解压）没有，只能提醒用户去下载。
+function isInstalled() {
+  if (!IS_WINDOWS || !app.isPackaged) return false;
+  try {
+    return fs.readdirSync(path.dirname(process.execPath)).some((name) => /^Uninstall .+\.exe$/i.test(name));
+  } catch {
+    return false;
+  }
+}
+
+function updateState() {
+  return updater ? updater.state : { status: 'unsupported' };
+}
+
+function onUpdateChange(state) {
+  send('bloom:state', { update: state });
+  updateTray();
+  // 常驻托盘时看不到主窗口里的提示，下载好后用一条安静的通知告诉用户；专注中不打扰。
+  const mainVisible = mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() && !mainWindow.isMinimized();
+  if (state.status !== 'downloaded' || store.isSessionActive || mainVisible || !Notification.isSupported()) return;
+  updateNotice = new Notification({
+    title: `专注芽 v${state.version} 已准备好`,
+    body: '退出专注芽时会自动安装，也可以打开专注芽立即重启并更新。',
+    silent: true
+  });
+  updateNotice.on('click', showMain);
+  updateNotice.show();
+}
+
 // ---- IPC ----
 
 function registerIPC() {
@@ -424,7 +473,8 @@ function registerIPC() {
     ...store.snapshot(),
     settingsAck: settingsAck.get(event.sender.id) || 0,
     dataFile: persistence.file,
-    version: app.getVersion()
+    version: app.getVersion(),
+    update: updateState()
   }));
 
   ipcMain.handle('bloom:action', (_event, name, ...args) => {
@@ -448,6 +498,12 @@ function registerIPC() {
     } else if (command === 'open-data-folder') {
       fs.mkdirSync(persistence.directory, { recursive: true });
       shell.openPath(persistence.directory);
+    } else if (command === 'check-update') {
+      if (updater) updater.check({ manual: true });
+    } else if (command === 'install-update') {
+      if (updater && !store.isSessionActive) updater.install();
+    } else if (command === 'open-download-page') {
+      shell.openExternal(RELEASES_URL);
     }
   });
 }
@@ -481,6 +537,11 @@ function start() {
   wireStore();
   createMainWindow();
   createTray();
+  updater = createUpdater();
+  if (updater) {
+    updater.on('change', onUpdateChange);
+    updater.start();
+  }
 }
 
 app.setAppUserModelId(APP_ID);
@@ -492,6 +553,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('activate', showMain);
   app.on('before-quit', () => {
     quitting = true;
+    if (updater) updater.dispose();
     if (store) store.dispose();
   });
   // 主窗口关到托盘时不退出；真正退出走托盘菜单或关闭“留在托盘”。

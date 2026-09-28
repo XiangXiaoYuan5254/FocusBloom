@@ -18,18 +18,31 @@ final class FocusBloomAppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct FocusBloomApp: App {
     @NSApplicationDelegateAdaptor(FocusBloomAppDelegate.self) private var appDelegate
-    @StateObject private var store = AppStore()
+    @StateObject private var store: AppStore
+    @StateObject private var updater: AppUpdater
+
+    init() {
+        let store = AppStore()
+        _store = StateObject(wrappedValue: store)
+        _updater = StateObject(wrappedValue: AppUpdater(isBusy: { store.isSessionActive }))
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(store)
+                .environmentObject(updater)
                 .frame(minWidth: 1080, minHeight: 720)
                 .preferredColorScheme(store.settings.resolvedAppearanceMode == .light ? .light : .dark)
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .defaultSize(width: 1180, height: 790)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesCommand(updater: updater)
+            }
+        }
 
         Window("专注芽倒计时", id: FloatingTimerWindow.id) {
             FloatingTimerView()
@@ -232,6 +245,8 @@ struct SidebarView: View {
                 .padding(.horizontal, 12)
 
                 Spacer()
+
+                UpdateNoticeView()
 
                 Button {
                     store.toggleAppearance()

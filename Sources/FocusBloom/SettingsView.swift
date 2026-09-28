@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var store: AppStore
+    @EnvironmentObject private var updater: AppUpdater
     @State private var showClearConfirmation = false
     @State private var newManagedTaskName = ""
 
@@ -25,6 +26,7 @@ struct SettingsView: View {
                         sessionSettings
                         taskSettings
                         dataSettings
+                        updateSettings
                         philosophyCard
                     }
                     .frame(width: 370)
@@ -373,6 +375,41 @@ struct SettingsView: View {
             }
             .buttonStyle(BloomSecondaryButtonStyle())
             .disabled(store.sessions.isEmpty)
+        }
+    }
+
+    private var updateSettings: some View {
+        settingsCard(title: "软件更新", subtitle: "新版本会从 GitHub Release 下载", symbol: "arrow.down.circle.fill") {
+            settingRow(
+                title: "当前版本 \(updater.currentVersion)",
+                detail: updater.isAvailable ? "有新版本时弹出提示，一键安装并重新打开" : "开发版不检查更新"
+            ) {
+                EmptyView()
+            }
+
+            Toggle(isOn: $updater.automaticallyChecksForUpdates) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("自动检查更新")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(BloomTheme.primaryText)
+                    Text("每天检查一次；专注中发现的新版本，等这一轮结束再提示")
+                        .font(.system(size: 9))
+                        .foregroundStyle(BloomTheme.secondaryText)
+                }
+            }
+            .toggleStyle(.switch)
+            .disabled(!updater.isAvailable)
+
+            Button {
+                updater.checkForUpdates()
+            } label: {
+                HStack {
+                    Label("检查更新", systemImage: "arrow.clockwise")
+                    Spacer()
+                }
+            }
+            .buttonStyle(BloomSecondaryButtonStyle())
+            .disabled(!updater.canCheckForUpdates)
         }
     }
 

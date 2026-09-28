@@ -84,7 +84,8 @@
       ambientFollowsFocus: true,
       // Windows 版独有的设置，macOS 版解码时会忽略。
       musicPlayer: 'netease',
-      closeToTray: true
+      closeToTray: true,
+      autoCheckUpdates: true
     };
   }
 
@@ -127,7 +128,7 @@
 
     if (!REMINDER_SOUND_OPTIONS.includes(result.reminderSound)) result.reminderSound = defaults.reminderSound;
     if (!COMPLETION_SOUND_OPTIONS.includes(result.completionSound)) result.completionSound = defaults.completionSound;
-    for (const key of ['showNextReminder', 'autoPlayMusic', 'floatingTimerOnMinimize', 'floatingSignalButtons', 'ambientFollowsFocus', 'closeToTray']) {
+    for (const key of ['showNextReminder', 'autoPlayMusic', 'floatingTimerOnMinimize', 'floatingSignalButtons', 'ambientFollowsFocus', 'closeToTray', 'autoCheckUpdates']) {
       result[key] = typeof result[key] === 'boolean' ? result[key] : defaults[key];
     }
     result.appearanceMode = result.appearanceMode === 'light' ? 'light' : 'dark';

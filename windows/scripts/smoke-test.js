@@ -3,6 +3,7 @@
 // GitHub Actions 的 Windows 机器上会自动运行；本地也可以运行：npm run smoke-test
 const { spawn } = require('child_process');
 const fs = require('fs');
+const http = require('http');
 const os = require('os');
 const path = require('path');
 
@@ -11,6 +12,8 @@ const outDir = path.join(root, 'smoke');
 const IS_WINDOWS = process.platform === 'win32';
 const PAGE_PORT = 9322;
 const MAIN_PORT = 9329;
+const UPDATE_PORT = 9331;
+const UPDATE_VERSION = '99.0.0';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const results = [];
@@ -113,14 +116,46 @@ async function step(name, run, { soft = false } = {}) {
   }
 }
 
+// 假装 GitHub Release 上有一个新版本：electron-updater 读的是 latest.yml（Mac 上是 latest-mac.yml）。
+// 打包出来的 win-unpacked 没有卸载程序，按免安装版处理，只检查不下载，所以安装包本身不需要是真的。
+function startUpdateServer() {
+  const manifest = [
+    `version: ${UPDATE_VERSION}`,
+    'files:',
+    '  - url: FocusBloom-Windows-Setup-x64.exe',
+    '    sha512: AAAA',
+    '    size: 1',
+    'path: FocusBloom-Windows-Setup-x64.exe',
+    'sha512: AAAA',
+    `releaseDate: '${new Date().toISOString()}'`,
+    ''
+  ].join('\n');
+  const server = http.createServer((request, response) => {
+    if (/\/latest(-mac)?\.yml$/.test(request.url.split('?')[0])) {
+      response.writeHead(200, { 'Content-Type': 'text/yaml' });
+      response.end(manifest);
+    } else {
+      response.writeHead(404);
+      response.end();
+    }
+  });
+  return new Promise((resolve) => server.listen(UPDATE_PORT, '127.0.0.1', () => resolve(server)));
+}
+
 async function main() {
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'focusbloom-smoke-'));
+  const updateServer = await startUpdateServer();
   const [command, args] = launchCommand();
   console.log(`启动 ${command}`);
   const log = fs.createWriteStream(path.join(outDir, 'app.log'));
-  const env = { ...process.env, FOCUSBLOOM_DATA_DIR: dataDir, ELECTRON_ENABLE_LOGGING: '1' };
+  const env = {
+    ...process.env,
+    FOCUSBLOOM_DATA_DIR: dataDir,
+    FOCUSBLOOM_UPDATE_URL: `http://127.0.0.1:${UPDATE_PORT}/`,
+    ELECTRON_ENABLE_LOGGING: '1'
+  };
   delete env.ELECTRON_RUN_AS_NODE;
   const child = spawn(command, [...args, `--remote-debugging-port=${PAGE_PORT}`, `--inspect=${MAIN_PORT}`], {
     env,
@@ -252,6 +287,31 @@ async function main() {
       await screenshot(ui, '08-focus-light.png');
     });
 
+    await step('检查更新能发现新版本，并在侧边栏和设置页提示', async () => {
+      await ui.evaluate(`window.bloom.command('check-update');`);
+      const update = await waitFor(
+        async () => {
+          const state = await ui.evaluate(`return BloomClient.state.update`);
+          return state && (state.status === 'available' || state.status === 'error') ? state : null;
+        },
+        { timeout: 20000, label: '检查结果' }
+      );
+      if (update.status !== 'available' || update.version !== UPDATE_VERSION) throw new Error(JSON.stringify(update));
+      await ui.evaluate(`document.querySelectorAll('.nav-item')[3].click();`);
+      await sleep(500);
+      const texts = await ui.evaluate(
+        `return { notice: document.querySelector('.update-notice')?.textContent || '', page: document.querySelector('.page').textContent }`
+      );
+      await ui.evaluate(
+        `[...document.querySelectorAll('.settings-card')].find((card) => card.textContent.includes('软件更新')).scrollIntoView({ block: 'center' });`
+      );
+      await sleep(300);
+      await screenshot(ui, '09-update.png');
+      if (!texts.notice.includes(`v${UPDATE_VERSION}`)) throw new Error(`侧边栏没有新版本提示：${texts.notice}`);
+      if (!texts.page.includes(`前往下载 v${UPDATE_VERSION}`)) throw new Error('设置页没有“前往下载”按钮');
+      return `v${update.version}`;
+    });
+
     await step('界面没有报错', async () => {
       if (ui.errors.length) throw new Error(ui.errors.join('\n'));
     });
@@ -266,6 +326,7 @@ async function main() {
     mainProcess?.close();
     await waitFor(() => exited, { timeout: 10000, label: '退出' }).catch(() => child.kill());
     log.end();
+    updateServer.close();
     fs.rmSync(dataDir, { recursive: true, force: true });
   }
 

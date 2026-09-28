@@ -21,10 +21,10 @@ for (const [from, to] of vendorFiles) {
 // Lucide 图标（ISC 授权），和 macOS 版的 SF Symbols 一一对应。
 const icons = [
   'activity', 'arrow-right', 'audio-lines', 'battery-low', 'bell-ring', 'bird', 'brain', 'calendar',
-  'chart-line', 'chart-spline', 'check', 'chevron-right', 'circle-check', 'circle-dashed', 'circle-pause',
-  'clock', 'cloud', 'cloud-rain', 'crosshair', 'droplet', 'eye', 'flame', 'gauge', 'hard-drive',
+  'chart-line', 'chart-spline', 'check', 'chevron-right', 'circle-arrow-down', 'circle-check', 'circle-dashed',
+  'circle-pause', 'clock', 'cloud', 'cloud-rain', 'crosshair', 'droplet', 'eye', 'flame', 'gauge', 'hard-drive',
   'heart-pulse', 'history', 'hourglass', 'layout-grid', 'leaf', 'maximize-2', 'minus', 'moon-star', 'music',
-  'pause', 'play', 'plus', 'quote', 'share', 'shuffle', 'sliders-horizontal', 'sparkles', 'sprout',
+  'pause', 'play', 'plus', 'quote', 'refresh-cw', 'share', 'shuffle', 'sliders-horizontal', 'sparkles', 'sprout',
   'square', 'sun', 'tag', 'text-search', 'timer', 'trash-2', 'trending-up', 'volume-1', 'volume-2',
   'waves', 'wind', 'x'
 ];

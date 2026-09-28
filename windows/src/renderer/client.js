@@ -7,7 +7,7 @@
   let serverSettings = null;
   let pending = [];
   let seq = 0;
-  let current = { ready: false, settings: null, sessions: [], runtime: null, meta: {} };
+  let current = { ready: false, settings: null, sessions: [], runtime: null, update: null, meta: {} };
 
   function effectiveSettings() {
     return pending.reduce((settings, entry) => ({ ...settings, ...entry.patch }), serverSettings);
@@ -28,6 +28,7 @@
     if (message.settings) applySettings(message.settings, message.settingsAck);
     if (message.sessions) next.sessions = message.sessions;
     if (message.runtime) next.runtime = message.runtime;
+    if (message.update) next.update = message.update;
     current = next;
     if (current.ready) publish();
   });
@@ -39,6 +40,7 @@
       settings: null,
       sessions: snapshot.sessions,
       runtime: snapshot.runtime,
+      update: snapshot.update,
       meta: { dataFile: snapshot.dataFile, version: snapshot.version }
     };
     publish();

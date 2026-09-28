@@ -307,6 +307,30 @@ input {
   background: color-mix(in srgb, var(--tint) 11%, transparent);
 }
 
+.update-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 14px 10px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--mint) 28%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--mint) 8%, transparent);
+}
+
+.update-notice-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+}
+
+.update-notice p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
 .today-card {
   display: flex;
   flex-direction: column;

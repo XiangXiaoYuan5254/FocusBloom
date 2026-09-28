@@ -9,10 +9,24 @@ contents_dir="$app_dir/Contents"
 iconset_dir="$project_dir/.build/FocusBloom.iconset"
 master_icon="$project_dir/.build/FocusBloomIcon.png"
 
+# 版本号只在 windows/package.json 里维护一处，Mac 版和 Windows 版保持一致。
+# 自动更新靠它比较新旧版本，每次发布前都要改大。
+app_version=$(plutil -extract version raw -o - "$project_dir/windows/package.json")
+
+# 自动更新（Sparkle）：从 GitHub 最新 Release 读取 appcast.xml；更新包用钥匙串里的私钥签名，
+# App 用下面的公钥校验。私钥由 Sparkle 的 generate_keys 生成，丢了就没法给已安装的用户推送更新。
+feed_url="https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest/download/appcast.xml"
+sparkle_public_key="a4YYKzVnInWnOIYfKWrARvEEsYKyac4bSKazr9nqeLo="
+
 swift build -c release --package-path "$project_dir"
 
 mkdir -p "$contents_dir/MacOS" "$contents_dir/Resources" "$iconset_dir"
 cp "$build_dir/FocusBloom" "$contents_dir/MacOS/FocusBloom"
+
+rm -rf "$contents_dir/Frameworks"
+mkdir -p "$contents_dir/Frameworks"
+ditto "$build_dir/Sparkle.framework" "$contents_dir/Frameworks/Sparkle.framework"
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$contents_dir/MacOS/FocusBloom"
 
 swift "$project_dir/Scripts/generate_icon.swift" "$master_icon"
 
@@ -40,7 +54,7 @@ rm -rf "$contents_dir/Resources/Ambient"
 mkdir -p "$contents_dir/Resources/Ambient"
 cp "$project_dir"/Resources/Ambient/*.m4a "$contents_dir/Resources/Ambient/"
 
-cat > "$contents_dir/Info.plist" <<'PLIST'
+cat > "$contents_dir/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -62,18 +76,32 @@ cat > "$contents_dir/Info.plist" <<'PLIST'
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.0</string>
+    <string>$app_version</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>$app_version</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>专注芽需要控制“音乐”App 或通过“System Events”操作网易云音乐，以便在一轮专注结束后自动播放音乐。</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>SUFeedURL</key>
+    <string>$feed_url</string>
+    <key>SUPublicEDKey</key>
+    <string>$sparkle_public_key</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
 </dict>
 </plist>
 PLIST
 
-codesign --force --deep --sign - "$app_dir"
+# 用固定的自签名证书签名：签名身份不变，系统授权（辅助功能、自动化）在重新打包后仍然有效。
+# 没有这个证书时退回临时签名，此时每次打包后都要重新授权。
+signing_identity="${FOCUSBLOOM_SIGNING_IDENTITY:-FocusBloom Dev}"
+if security find-identity -p codesigning | grep -qF "\"$signing_identity\""; then
+  codesign --force --deep --sign "$signing_identity" "$app_dir"
+else
+  echo "未找到代码签名证书“$signing_identity”，使用临时签名（重新打包后需要重新授权辅助功能）。" >&2
+  codesign --force --deep --sign - "$app_dir"
+fi
 echo "$app_dir"

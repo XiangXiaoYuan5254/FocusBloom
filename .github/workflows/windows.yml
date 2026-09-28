@@ -2,6 +2,7 @@
 # 单元测试 → 打包安装程序 → 启动真实的 FocusBloom.exe 走一遍主要功能并截图。
 # 截图、日志和安装包都会作为本次运行的产物（Artifacts）保存，可以在 Actions 页面下载。
 # 推送 v 开头的标签时，还会把安装包附加到同名的 GitHub Release（没有就先建一个草稿）。
+# 其中 latest.yml 是给自动更新用的：已安装的专注芽靠它发现新版本、校验下载的安装包。
 # 只改了 windows/ 里的说明文档（.md）时不运行；同一次提交里有代码改动就照常运行。
 name: Windows 版
 
@@ -74,7 +75,9 @@ jobs:
           name: FocusBloom-Windows
           path: |
             windows/dist/FocusBloom-Windows-Setup-x64.exe
+            windows/dist/FocusBloom-Windows-Setup-x64.exe.blockmap
             windows/dist/FocusBloom-Windows-Portable-x64.zip
+            windows/dist/latest.yml
           if-no-files-found: error
           compression-level: 0
 

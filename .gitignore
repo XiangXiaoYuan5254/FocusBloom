@@ -15,3 +15,9 @@ website/
 # Windows 版（windows/）的依赖和测试截图；安装包在 dist/ 里，上面已经忽略
 node_modules/
 windows/smoke/
+
+# 签名密钥和证书只备份在安全的地方，绝不提交（Sparkle 私钥、导出的代码签名证书）
+*sparkle-key*
+*sparkle_key*
+*.p12
+*.pem

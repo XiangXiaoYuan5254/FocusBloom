@@ -48,18 +48,19 @@ zsh Scripts/package_app.sh
 
 ## 自动更新与发布新版本
 
-两个版本都从 GitHub 最新的 Release 检查新版本：
+两个版本都从官网 <https://helloxxy.com/works/focusbloom/downloads/> 检查新版本（国内访问 GitHub 不稳定，所以不走 GitHub）：
 
-- **macOS**：Sparkle 每天读取一次 Release 里的 `appcast.xml`，发现新版本后弹出更新窗口（显示 Release 正文作为更新说明），用户点“安装更新”即可自动下载、校验、替换并重新打开。更新包用 EdDSA 私钥签名，App 里内置对应的公钥，签名不对的更新包不会被安装。
+- **macOS**：Sparkle 每天读取一次官网上的 `appcast.xml`，发现新版本后弹出更新窗口（显示 GitHub Release 正文作为更新说明，打包时写进 `appcast.xml`），用户点“安装更新”即可从官网下载、校验、替换并重新打开。更新包用 EdDSA 私钥签名，App 里内置对应的公钥，签名不对的更新包不会被安装。
 - **Windows**：见 [windows/README.md](windows/README.md#自动更新)。
 
 发布一个新版本：
 
 1. 把 `windows/package.json` 里的 `version` 改大（例如 `1.2.0`），提交并推送。
-2. 推送同名标签：`git tag v1.2.0 && git push origin v1.2.0`。GitHub Actions 会打包 Windows 版，把安装包和 `latest.yml` 附加到草稿 Release `v1.2.0`。
+2. 推送同名标签：`git tag v1.2.0 && git push origin v1.2.0`。GitHub Actions 会打包 Windows 版，把安装包、`.blockmap` 和 `latest.yml` 附加到草稿 Release `v1.2.0`。
 3. 在 GitHub 上把这个 Release 的正文改成这次的更新说明（Markdown）。
-4. 在 Mac 上运行 `zsh Scripts/release_mac.sh --upload`：打包 Mac 版、签名，生成 `appcast.xml`，连同 `FocusBloom-macOS.zip` 一起上传到这个 Release。
-5. 在 GitHub 上发布这个 Release（取消草稿）。已安装的用户下次检查时就会收到更新。
+4. 在 Mac 上运行 `zsh Scripts/release_mac.sh --upload`：打包 Mac 版、签名，生成 `appcast.xml`，并把 `FocusBloom-macOS.zip` 上传到这个 Release。
+5. 在 GitHub 上发布这个 Release（取消草稿）。
+6. 把 `FocusBloom-macOS.zip`、`appcast.xml`，以及 Release 里的 `FocusBloom-Windows-Setup-x64.exe`、`FocusBloom-Windows-Setup-x64.exe.blockmap`、`latest.yml` 放到官网的 `downloads/` 并部署。已安装的用户下次检查时就会收到更新。
 
 两样东西只存在这台 Mac 的钥匙串里，务必备份，否则以后没法给已安装的 Mac 用户推送更新：
 
@@ -82,7 +83,7 @@ zsh Scripts/package_app.sh
 
 - 不需要注册或登录
 - 不上传专注记录
-- 唯一的联网是检查更新：从 GitHub 读取最新版本信息，不发送任何记录；可以在“设置 → 软件更新”里关闭自动检查
+- 唯一的联网是检查更新：从官网 helloxxy.com 读取最新版本信息，不发送任何记录；可以在“设置 → 软件更新”里关闭自动检查
 - 不包含分析 SDK 或广告
 - 删除 App 不会自动删除上述数据文件
 

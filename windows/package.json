@@ -1,7 +1,7 @@
 {
   "name": "focusbloom-windows",
   "productName": "专注芽",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "专注芽 FocusBloom：本地优先的专注训练工具（Windows 版）",
   "main": "src/main/main.js",
@@ -51,9 +51,8 @@
     "asar": true,
     "publish": [
       {
-        "provider": "github",
-        "owner": "XiangXiaoYuan5254",
-        "repo": "FocusBloom"
+        "provider": "generic",
+        "url": "https://helloxxy.com/works/focusbloom/downloads/"
       }
     ],
     "win": {

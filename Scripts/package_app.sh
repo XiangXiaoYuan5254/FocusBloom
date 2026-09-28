@@ -13,9 +13,9 @@ master_icon="$project_dir/.build/FocusBloomIcon.png"
 # 自动更新靠它比较新旧版本，每次发布前都要改大。
 app_version=$(plutil -extract version raw -o - "$project_dir/windows/package.json")
 
-# 自动更新（Sparkle）：从 GitHub 最新 Release 读取 appcast.xml；更新包用钥匙串里的私钥签名，
+# 自动更新（Sparkle）：从官网读取 appcast.xml（由 Scripts/release_mac.sh 生成）；更新包用钥匙串里的私钥签名，
 # App 用下面的公钥校验。私钥由 Sparkle 的 generate_keys 生成，丢了就没法给已安装的用户推送更新。
-feed_url="https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest/download/appcast.xml"
+feed_url="https://helloxxy.com/works/focusbloom/downloads/appcast.xml"
 sparkle_public_key="a4YYKzVnInWnOIYfKWrARvEEsYKyac4bSKazr9nqeLo="
 
 swift build -c release --package-path "$project_dir"

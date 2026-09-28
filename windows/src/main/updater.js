@@ -1,4 +1,4 @@
-// 自动更新（对应 macOS 版的 Sparkle）：从 GitHub Release 检查新版本。
+// 自动更新（对应 macOS 版的 Sparkle）：从官网（helloxxy.com）上的 latest.yml 检查新版本，地址见 package.json 的 publish。
 // 安装版在后台下载好新版本，退出时自动安装，也可以点“重启并更新”立即安装；
 // 免安装版（zip 解压）没法替换自己，只提醒去下载页。
 const { EventEmitter } = require('events');

@@ -116,7 +116,7 @@ async function step(name, run, { soft = false } = {}) {
   }
 }
 
-// 假装 GitHub Release 上有一个新版本：electron-updater 读的是 latest.yml（Mac 上是 latest-mac.yml）。
+// 假装官网上有一个新版本：electron-updater 读的是 latest.yml（Mac 上是 latest-mac.yml）。
 // 打包出来的 win-unpacked 没有卸载程序，按免安装版处理，只检查不下载，所以安装包本身不需要是真的。
 function startUpdateServer() {
   const manifest = [

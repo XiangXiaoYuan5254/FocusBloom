@@ -1,9 +1,10 @@
 #!/bin/zsh
 # 发布 macOS 版：打包 → 压缩成 FocusBloom-macOS.zip → 用 Sparkle 私钥签名 → 生成 appcast.xml。
-# 已安装的专注芽通过 GitHub 最新 Release 里的 appcast.xml 发现新版本，所以这两个文件都要上传。
+# 已安装的专注芽读取官网上的 appcast.xml 发现新版本，再从官网下载同目录的 zip，
+# 所以这两个文件都要放到官网的 downloads/ 下（本地有 website/ 目录时会自动复制过去）。
 #
 #   zsh Scripts/release_mac.sh            只在 dist/ 里生成两个文件
-#   zsh Scripts/release_mac.sh --upload   同时上传到 GitHub 上 v<版本号> 的 Release（没有就先建一个草稿）
+#   zsh Scripts/release_mac.sh --upload   同时把 zip 上传到 GitHub 上 v<版本号> 的 Release（没有就先建一个草稿）
 #
 # 更新窗口里显示的更新说明取自这个 Release 的正文（Markdown），所以先在 GitHub 上写好正文再运行；
 # 之后改了正文，重新运行一次即可。
@@ -17,6 +18,8 @@ version=$(plutil -extract version raw -o - "$project_dir/windows/package.json")
 tag="v$version"
 zip_path="$dist_dir/FocusBloom-macOS.zip"
 appcast_path="$dist_dir/appcast.xml"
+downloads_url="https://helloxxy.com/works/focusbloom/downloads"
+site_downloads="$project_dir/website/downloads"
 
 upload=false
 if [[ "${1:-}" == "--upload" ]]; then
@@ -55,7 +58,7 @@ cat > "$appcast_path" <<XML
       <sparkle:shortVersionString>$version</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       $description
-      <enclosure url="https://github.com/$repo/releases/download/$tag/FocusBloom-macOS.zip" type="application/octet-stream" $signature/>
+      <enclosure url="$downloads_url/FocusBloom-macOS.zip" type="application/octet-stream" $signature/>
     </item>
   </channel>
 </rss>
@@ -64,10 +67,15 @@ XML
 echo "$zip_path"
 echo "$appcast_path"
 
+if [[ -d "$site_downloads" ]]; then
+  cp "$zip_path" "$appcast_path" "$site_downloads/"
+  echo "已复制到 $site_downloads，部署官网后已安装的用户就会收到更新。"
+fi
+
 if $upload; then
   if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
     gh release create "$tag" --repo "$repo" --draft --title "专注芽 $tag" --notes ""
   fi
-  gh release upload "$tag" "$zip_path" "$appcast_path" --repo "$repo" --clobber
-  echo "已上传到 $tag。Release 发布（不是草稿）之后，已安装的用户才会收到更新。"
+  gh release upload "$tag" "$zip_path" --repo "$repo" --clobber
+  echo "已上传到 $tag。"
 fi

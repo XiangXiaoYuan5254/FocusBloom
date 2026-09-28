@@ -1,7 +1,7 @@
 import Sparkle
 import SwiftUI
 
-/// 自动更新：Sparkle 定期读取 GitHub Release 上的 appcast.xml，发现新版本后弹出更新窗口，
+/// 自动更新：Sparkle 定期读取官网（helloxxy.com）上的 appcast.xml，发现新版本后弹出更新窗口，
 /// 下载、校验签名、替换 App 并重新打开都由 Sparkle 完成。
 /// 专注中发现的新版本不弹窗打断，只在侧边栏留一个提示，等用户有空时再点。
 @MainActor

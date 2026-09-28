@@ -24,7 +24,7 @@ const { Updater } = require('./updater');
 const ROOT = path.join(__dirname, '..', '..');
 const IS_WINDOWS = process.platform === 'win32';
 const APP_ID = 'com.local.FocusBloom';
-const RELEASES_URL = 'https://github.com/XiangXiaoYuan5254/FocusBloom/releases/latest';
+const DOWNLOAD_PAGE_URL = 'https://helloxxy.com/works/focusbloom/#download';
 const RENDERER = path.join(ROOT, 'src', 'renderer');
 const AMBIENT_DIR = app.isPackaged
   ? path.join(process.resourcesPath, 'Ambient')
@@ -426,7 +426,7 @@ async function exportCSV(sessions) {
 // ---- 自动更新 ----
 
 function createUpdater() {
-  // 冒烟测试用本地地址代替 GitHub Release，开发版也能走一遍检查流程。
+  // 冒烟测试用本地地址代替官网，开发版也能走一遍检查流程。
   const testFeed = process.env.FOCUSBLOOM_UPDATE_URL;
   if (!testFeed && !(app.isPackaged && IS_WINDOWS)) return null;
   const { autoUpdater } = require('electron-updater');
@@ -503,7 +503,7 @@ function registerIPC() {
     } else if (command === 'install-update') {
       if (updater && !store.isSessionActive) updater.install();
     } else if (command === 'open-download-page') {
-      shell.openExternal(RELEASES_URL);
+      shell.openExternal(DOWNLOAD_PAGE_URL);
     }
   });
 }

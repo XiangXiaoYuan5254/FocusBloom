@@ -102,7 +102,7 @@ enum MusicController {
             throw MusicError.script("没有找到网易云音乐客户端")
         }
 
-        // 点菜单依赖辅助功能权限。专注芽是 ad-hoc 签名，每次重新打包后旧授权都会失效（系统设置里仍显示已勾选）。
+        // 点菜单依赖辅助功能权限。换了签名的版本（比如从临时签名换成 Developer ID）会让旧授权失效，系统设置里却仍显示已勾选。
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         guard AXIsProcessTrustedWithOptions(options) else {
             throw MusicError.script("需要在“系统设置 › 隐私与安全性 › 辅助功能”中允许“专注芽”；如果已经勾选，请先用“−”移除旧条目再重新添加")

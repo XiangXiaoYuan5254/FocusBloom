@@ -1,5 +1,6 @@
 #!/bin/zsh
-# 发布 macOS 版：打包 → 压缩成 FocusBloom-macOS.zip → 用 Sparkle 私钥签名 → 生成 appcast.xml。
+# 发布 macOS 版：打包（Developer ID 签名）→ Apple 公证并贴上票据 → 压缩成 FocusBloom-macOS.zip
+# → 用 Sparkle 私钥签名 → 生成 appcast.xml。
 # 已安装的专注芽读取官网上的 appcast.xml 发现新版本，再从官网下载同目录的 zip，
 # 所以这两个文件都要放到官网的 downloads/ 下（本地有 website/ 目录时会自动复制过去）。
 #
@@ -21,6 +22,9 @@ appcast_path="$dist_dir/appcast.xml"
 downloads_url="https://helloxxy.com/works/focusbloom/downloads"
 site_downloads="$project_dir/website/downloads"
 
+# 公证凭据：xcrun notarytool store-credentials helloxxy-notary（存在登录钥匙串里）
+notary_profile="${FOCUSBLOOM_NOTARY_PROFILE:-helloxxy-notary}"
+
 upload=false
 if [[ "${1:-}" == "--upload" ]]; then
   upload=true
@@ -28,8 +32,24 @@ if [[ "${1:-}" == "--upload" ]]; then
 fi
 
 zsh "$project_dir/Scripts/package_app.sh" >/dev/null
+app_dir="$dist_dir/专注芽.app"
+
+# 交给 Apple 公证（几分钟，期间别让 Mac 锁屏，否则读不到凭据），通过后把票据贴进 App，
+# 这样下载的用户第一次打开不会被 Gatekeeper 拦下。
 rm -f "$zip_path"
-ditto -c -k --keepParent "$dist_dir/专注芽.app" "$zip_path"
+ditto -c -k --keepParent "$app_dir" "$zip_path"
+result=$(xcrun notarytool submit "$zip_path" --keychain-profile "$notary_profile" --wait --output-format json)
+if [[ "$(plutil -extract status raw -o - - <<<"$result")" != "Accepted" ]]; then
+  echo "公证没有通过：$result" >&2
+  echo "查看原因：xcrun notarytool log <id> --keychain-profile $notary_profile" >&2
+  exit 1
+fi
+xcrun stapler staple -q "$app_dir"
+# 打包用的 Mac 可能关掉了 Gatekeeper，那样 spctl 什么都放行，所以只认来源是否为已公证的 Developer ID。
+spctl -a -vv -t exec "$app_dir" 2>&1 | grep -q "source=Notarized Developer ID" || { echo "$app_dir 没有公证上" >&2; exit 1; }
+
+rm -f "$zip_path"
+ditto -c -k --keepParent "$app_dir" "$zip_path"
 
 # 输出形如 sparkle:edSignature="…" length="…"，直接放进 appcast 的 enclosure。
 signature=$("$sparkle_bin/sign_update" --account FocusBloom "$zip_path")

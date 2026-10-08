@@ -42,7 +42,7 @@ zsh Scripts/package_app.sh
 
 版本号只在 `windows/package.json` 的 `version` 里维护，Mac 版和 Windows 版共用。
 
-如果钥匙串里有名为 `FocusBloom Dev` 的代码签名证书（可在“钥匙串访问 → 证书助理 → 创建证书”中创建：身份类型选“自签名根证书”，证书类型选“代码签名”），打包脚本会用它签名，系统授权在重新打包后仍然有效；否则使用临时签名，每次打包后需要在系统设置中重新授权。也可以用环境变量 `FOCUSBLOOM_SIGNING_IDENTITY` 指定其他证书名称。
+打包脚本用钥匙串里的 Developer ID 证书 `Developer ID Application: Li Ming wang (46AL7LQ9T8)` 签名并开启 hardened runtime（entitlements 见 `Scripts/FocusBloom.entitlements`），系统授权在重新打包后仍然有效；钥匙串里没有这张证书时使用临时签名，只能自己用，每次打包后需要在系统设置中重新授权。也可以用环境变量 `FOCUSBLOOM_SIGNING_IDENTITY` 指定其他证书名称。
 
 首次使用 Apple Music 功能时，macOS 会询问是否允许“专注芽”控制“音乐”。使用网易云音乐时，需要在“系统设置 → 隐私与安全性 → 辅助功能”中允许“专注芽”控制网易云音乐。
 
@@ -58,14 +58,14 @@ zsh Scripts/package_app.sh
 1. 把 `windows/package.json` 里的 `version` 改大（例如 `1.2.0`），提交并推送。
 2. 推送同名标签：`git tag v1.2.0 && git push origin v1.2.0`。GitHub Actions 会打包 Windows 版，把安装包、`.blockmap` 和 `latest.yml` 附加到草稿 Release `v1.2.0`。
 3. 在 GitHub 上把这个 Release 的正文改成这次的更新说明（Markdown）。
-4. 在 Mac 上运行 `zsh Scripts/release_mac.sh --upload`：打包 Mac 版、签名，生成 `appcast.xml`，并把 `FocusBloom-macOS.zip` 上传到这个 Release。
+4. 在 Mac 上运行 `zsh Scripts/release_mac.sh --upload`：打包 Mac 版、签名，交给 Apple 公证并贴上票据（几分钟，期间别让 Mac 锁屏），生成 `appcast.xml`，并把 `FocusBloom-macOS.zip` 上传到这个 Release。公证用登录钥匙串里名为 `helloxxy-notary` 的凭据（`xcrun notarytool store-credentials` 保存，`FOCUSBLOOM_NOTARY_PROFILE` 可换成别的）。
 5. 在 GitHub 上发布这个 Release（取消草稿）。
 6. 把 `FocusBloom-macOS.zip`、`appcast.xml`，以及 Release 里的 `FocusBloom-Windows-Setup-x64.exe`、`FocusBloom-Windows-Setup-x64.exe.blockmap`、`latest.yml` 放到官网的 `downloads/` 并部署。已安装的用户下次检查时就会收到更新。
 
 两样东西只存在这台 Mac 的钥匙串里，务必备份，否则以后没法给已安装的 Mac 用户推送更新：
 
 - Sparkle 私钥（钥匙串里账户为 `FocusBloom` 的条目）。导出：`.build/artifacts/sparkle/Sparkle/bin/generate_keys --account FocusBloom -x 备份文件路径`；在新电脑上导入：把 `-x` 换成 `-f`。
-- 代码签名证书 `FocusBloom Dev`（在“钥匙串访问”里右键导出为 .p12）。换了证书，更新仍能安装，但用户需要重新授权辅助功能和自动化。
+- Developer ID 证书（在“钥匙串访问”里右键导出为 .p12）。换了证书，更新仍能安装，但用户需要重新授权辅助功能和自动化。2026-10 起从临时签名换成了这张证书，所以从临时签名的版本更新上来时要重新授权一次。
 
 ## 环境音素材
 

@@ -95,13 +95,24 @@ cat > "$contents_dir/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# 用固定的自签名证书签名：签名身份不变，系统授权（辅助功能、自动化）在重新打包后仍然有效。
-# 没有这个证书时退回临时签名，此时每次打包后都要重新授权。
-signing_identity="${FOCUSBLOOM_SIGNING_IDENTITY:-FocusBloom Dev}"
-if security find-identity -p codesigning | grep -qF "\"$signing_identity\""; then
-  codesign --force --deep --sign "$signing_identity" "$app_dir"
+# 用 Developer ID 证书签名并开启 hardened runtime，这样才能交给 Apple 公证（Scripts/release_mac.sh）。
+# 签名身份不变，系统授权（辅助功能、自动化）在重新打包、更新后仍然有效。
+# 由内向外签：Sparkle.framework 自带的是临时签名，里面每个可执行文件都要换成同一张证书；
+# 不用 --deep，否则 Downloader.xpc 的 entitlements 会被抹掉。
+# 没有这张证书时退回临时签名，只能自己用，公证会失败，每次打包后也要重新授权。
+signing_identity="${FOCUSBLOOM_SIGNING_IDENTITY:-Developer ID Application: Li Ming wang (46AL7LQ9T8)}"
+if security find-identity -v -p codesigning | grep -qF "\"$signing_identity\""; then
+  sign=(codesign --force --sign "$signing_identity" --options runtime --timestamp)
 else
-  echo "未找到代码签名证书“$signing_identity”，使用临时签名（重新打包后需要重新授权辅助功能）。" >&2
-  codesign --force --deep --sign - "$app_dir"
+  echo "未找到代码签名证书“$signing_identity”，使用临时签名（不能公证，重新打包后需要重新授权辅助功能）。" >&2
+  sign=(codesign --force --sign -)
 fi
+sparkle_dir="$contents_dir/Frameworks/Sparkle.framework/Versions/B"
+"${sign[@]}" "$sparkle_dir/XPCServices/Installer.xpc"
+"${sign[@]}" --preserve-metadata=entitlements "$sparkle_dir/XPCServices/Downloader.xpc"
+"${sign[@]}" "$sparkle_dir/Autoupdate"
+"${sign[@]}" "$sparkle_dir/Updater.app"
+"${sign[@]}" "$contents_dir/Frameworks/Sparkle.framework"
+"${sign[@]}" --entitlements "$project_dir/Scripts/FocusBloom.entitlements" "$app_dir"
+codesign --verify --deep --strict "$app_dir"
 echo "$app_dir"

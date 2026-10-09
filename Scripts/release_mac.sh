@@ -1,14 +1,16 @@
 #!/bin/zsh
-# 发布 macOS 版：打包（Developer ID 签名）→ Apple 公证并贴上票据 → 压缩成 FocusBloom-macOS.zip
-# → 用 Sparkle 私钥签名 → 生成 appcast.xml。
-# 已安装的专注芽读取官网上的 appcast.xml 发现新版本，再从官网下载同目录的 zip，
-# 所以这两个文件都要放到官网的 downloads/ 下（本地有 website/ 目录时会自动复制过去）。
+# 发布 macOS 版：打包（Developer ID 签名）→ Apple 公证并贴上票据 → 生成两个安装包 → 生成 appcast.xml。
+#   FocusBloom-macOS.dmg  官网下载用：打开后把专注芽拖进「应用程序」，和页间的安装包一样（内容和布局见 Scripts/dmg/）。
+#   FocusBloom-macOS.zip  自动更新用：已安装的专注芽读取官网上的 appcast.xml 发现新版本，再从官网下载同目录的 zip。
+# 这三个文件都要放到官网的 downloads/ 下（本地有 website/ 目录时会自动复制过去）。
 #
-#   zsh Scripts/release_mac.sh            只在 dist/ 里生成两个文件
-#   zsh Scripts/release_mac.sh --upload   同时把 zip 上传到 GitHub 上 v<版本号> 的 Release（没有就先建一个草稿）
+#   zsh Scripts/release_mac.sh            只在 dist/ 里生成这三个文件
+#   zsh Scripts/release_mac.sh --upload   同时把 dmg 和 zip 上传到 GitHub 上 v<版本号> 的 Release（没有就先建一个草稿）
 #
 # 更新窗口里显示的更新说明取自这个 Release 的正文（Markdown），所以先在 GitHub 上写好正文再运行；
 # 之后改了正文，重新运行一次即可。
+#
+# dmg 用 dmgbuild 生成，由 uv 临时运行，第一次会下载 Python 和 dmgbuild（没有 uv 就先 brew install uv）。
 set -euo pipefail
 
 project_dir=${0:A:h:h}
@@ -18,12 +20,17 @@ sparkle_bin="$project_dir/.build/artifacts/sparkle/Sparkle/bin"
 version=$(plutil -extract version raw -o - "$project_dir/windows/package.json")
 tag="v$version"
 zip_path="$dist_dir/FocusBloom-macOS.zip"
+dmg_path="$dist_dir/FocusBloom-macOS.dmg"
 appcast_path="$dist_dir/appcast.xml"
 downloads_url="https://helloxxy.com/works/focusbloom/downloads"
 site_downloads="$project_dir/website/downloads"
 
 # 公证凭据：xcrun notarytool store-credentials helloxxy-notary（存在登录钥匙串里）
 notary_profile="${FOCUSBLOOM_NOTARY_PROFILE:-helloxxy-notary}"
+# 给 dmg 签名，和 Scripts/package_app.sh 给 App 签名用同一张证书
+signing_identity="${FOCUSBLOOM_SIGNING_IDENTITY:-Developer ID Application: Li Ming wang (46AL7LQ9T8)}"
+
+command -v uvx >/dev/null || { echo "生成 dmg 需要 uv，先运行 brew install uv。" >&2; exit 1; }
 
 upload=false
 if [[ "${1:-}" == "--upload" ]]; then
@@ -31,25 +38,45 @@ if [[ "${1:-}" == "--upload" ]]; then
   command -v gh >/dev/null || { echo "上传需要 GitHub CLI（gh），先运行 brew install gh 并 gh auth login。" >&2; exit 1; }
 fi
 
+# 交给 Apple 公证 $1（几分钟，期间别让 Mac 锁屏，否则读不到凭据），通过后把票据贴到 $2 上，
+# 这样下载的用户第一次打开不会被 Gatekeeper 拦下。
+notarize() {
+  local result
+  result=$(xcrun notarytool submit "$1" --keychain-profile "$notary_profile" --wait --output-format json)
+  if [[ "$(plutil -extract status raw -o - - <<<"$result")" != "Accepted" ]]; then
+    echo "公证没有通过：$result" >&2
+    echo "查看原因：xcrun notarytool log <id> --keychain-profile $notary_profile" >&2
+    exit 1
+  fi
+  xcrun stapler staple -q "$2"
+}
+
 zsh "$project_dir/Scripts/package_app.sh" >/dev/null
 app_dir="$dist_dir/专注芽.app"
 
-# 交给 Apple 公证（几分钟，期间别让 Mac 锁屏，否则读不到凭据），通过后把票据贴进 App，
-# 这样下载的用户第一次打开不会被 Gatekeeper 拦下。
 rm -f "$zip_path"
 ditto -c -k --keepParent "$app_dir" "$zip_path"
-result=$(xcrun notarytool submit "$zip_path" --keychain-profile "$notary_profile" --wait --output-format json)
-if [[ "$(plutil -extract status raw -o - - <<<"$result")" != "Accepted" ]]; then
-  echo "公证没有通过：$result" >&2
-  echo "查看原因：xcrun notarytool log <id> --keychain-profile $notary_profile" >&2
-  exit 1
-fi
-xcrun stapler staple -q "$app_dir"
+notarize "$zip_path" "$app_dir"
 # 打包用的 Mac 可能关掉了 Gatekeeper，那样 spctl 什么都放行，所以只认来源是否为已公证的 Developer ID。
 spctl -a -vv -t exec "$app_dir" 2>&1 | grep -q "source=Notarized Developer ID" || { echo "$app_dir 没有公证上" >&2; exit 1; }
 
 rm -f "$zip_path"
 ditto -c -k --keepParent "$app_dir" "$zip_path"
+
+# 官网下载用的 dmg：装的是上面已贴票据的 App，dmg 本身也签名、公证并贴上票据。
+# dmgbuild 要用 1.6.7 或更新的版本：更早的版本会多写一个背景图书签，Finder 打开时就不显示背景了。
+dmg_work="$project_dir/.build/dmg"
+swift "$project_dir/Scripts/dmg/background.swift" "$dmg_work"
+rm -f "$dmg_path"
+uvx --python 3.12 --from dmgbuild==1.6.7 dmgbuild -s "$project_dir/Scripts/dmg/settings.py" \
+  -D app="$app_dir" \
+  -D readme="$project_dir/Scripts/dmg/安装说明.txt" \
+  -D background="$dmg_work/background.png" \
+  -D icon="$app_dir/Contents/Resources/FocusBloom.icns" \
+  "专注芽 $version" "$dmg_path" >/dev/null
+codesign --force --sign "$signing_identity" --timestamp "$dmg_path"
+notarize "$dmg_path" "$dmg_path"
+spctl -a -vv -t open --context context:primary-signature "$dmg_path" 2>&1 | grep -q "source=Notarized Developer ID" || { echo "$dmg_path 没有公证上" >&2; exit 1; }
 
 # 输出形如 sparkle:edSignature="…" length="…"，直接放进 appcast 的 enclosure。
 signature=$("$sparkle_bin/sign_update" --account FocusBloom "$zip_path")
@@ -84,11 +111,12 @@ cat > "$appcast_path" <<XML
 </rss>
 XML
 
+echo "$dmg_path"
 echo "$zip_path"
 echo "$appcast_path"
 
 if [[ -d "$site_downloads" ]]; then
-  cp "$zip_path" "$appcast_path" "$site_downloads/"
+  cp "$dmg_path" "$zip_path" "$appcast_path" "$site_downloads/"
   echo "已复制到 $site_downloads，部署官网后已安装的用户就会收到更新。"
 fi
 
@@ -96,6 +124,6 @@ if $upload; then
   if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
     gh release create "$tag" --repo "$repo" --draft --title "专注芽 $tag" --notes ""
   fi
-  gh release upload "$tag" "$zip_path" --repo "$repo" --clobber
+  gh release upload "$tag" "$dmg_path" "$zip_path" --repo "$repo" --clobber
   echo "已上传到 $tag。"
 fi

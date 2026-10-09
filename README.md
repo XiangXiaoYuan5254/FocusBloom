@@ -58,9 +58,9 @@ zsh Scripts/package_app.sh
 1. 把 `windows/package.json` 里的 `version` 改大（例如 `1.2.0`），提交并推送。
 2. 推送同名标签：`git tag v1.2.0 && git push origin v1.2.0`。GitHub Actions 会打包 Windows 版，把安装包、`.blockmap` 和 `latest.yml` 附加到草稿 Release `v1.2.0`。
 3. 在 GitHub 上把这个 Release 的正文改成这次的更新说明（Markdown）。
-4. 在 Mac 上运行 `zsh Scripts/release_mac.sh --upload`：打包 Mac 版、签名，交给 Apple 公证并贴上票据（几分钟，期间别让 Mac 锁屏），生成 `appcast.xml`，并把 `FocusBloom-macOS.zip` 上传到这个 Release。公证用登录钥匙串里名为 `helloxxy-notary` 的凭据（`xcrun notarytool store-credentials` 保存，`FOCUSBLOOM_NOTARY_PROFILE` 可换成别的）。
+4. 在 Mac 上运行 `zsh Scripts/release_mac.sh --upload`：打包 Mac 版、签名，交给 Apple 公证并贴上票据（App 和 dmg 各公证一次，几分钟，期间别让 Mac 锁屏），生成两个安装包和 `appcast.xml`，并把两个安装包上传到这个 Release。`FocusBloom-macOS.dmg` 给官网下载用，打开后把专注芽拖进「应用程序」（和页间的安装包一样，内容和布局见 `Scripts/dmg/`）；`FocusBloom-macOS.zip` 给自动更新用。公证用登录钥匙串里名为 `helloxxy-notary` 的凭据（`xcrun notarytool store-credentials` 保存，`FOCUSBLOOM_NOTARY_PROFILE` 可换成别的）。dmg 用 [dmgbuild](https://github.com/dmgbuild/dmgbuild) 生成，由 `uvx` 临时运行，需要先 `brew install uv`。
 5. 在 GitHub 上发布这个 Release（取消草稿）。
-6. 把 `FocusBloom-macOS.zip`、`appcast.xml`，以及 Release 里的 `FocusBloom-Windows-Setup-x64.exe`、`FocusBloom-Windows-Setup-x64.exe.blockmap`、`latest.yml` 放到官网的 `downloads/` 并部署。已安装的用户下次检查时就会收到更新。
+6. 把 `FocusBloom-macOS.dmg`、`FocusBloom-macOS.zip`、`appcast.xml`，以及 Release 里的 `FocusBloom-Windows-Setup-x64.exe`、`FocusBloom-Windows-Setup-x64.exe.blockmap`、`latest.yml` 放到官网的 `downloads/` 并部署。已安装的用户下次检查时就会收到更新。
 
 两样东西只存在这台 Mac 的钥匙串里，务必备份，否则以后没法给已安装的 Mac 用户推送更新：
 
